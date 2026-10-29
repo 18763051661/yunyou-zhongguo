@@ -1,0 +1,47 @@
+﻿PASS  stats
+PASS  categories=5
+PASS  spots page
+PASS  spots filter+sort
+PASS  spots keyword
+PASS  spots tag
+PASS  spots difficulty
+PASS  spot detail
+PASS  spot favorited flag
+PASS  hot n=3
+PASS  top-rated n=3
+PASS  routes
+PASS  route detail
+PASS  comments list
+PASS  date formatted string
+PASS  recommend
+PASS  ai chat1
+PASS  ai chat2
+PASS  ai chat3
+PASS  login wrong pwd rejected
+PASS  register
+PASS  duplicate register graceful
+PASS  login demo
+PASS  me
+PASS  password not leaked
+PASS  profile update
+PASS  profile persisted
+PASS  favorite add
+PASS  favorite list contains 1
+PASS  favorite toggle off
+PASS  favorite list removed
+PASS  comment add
+PASS  comment visible
+PASS  short comment rejected
+PASS  tour start
+PASS  tour visit all steps (6)
+PASS  tour progress finished
+PASS  duplicate visit graceful
+PASS  foreign spot visit rejected
+PASS  tour records
+PASS  missing spot graceful
+PASS  missing route graceful
+PASS  unauth favorite blocked
+PASS  logout
+PASS  me after logout
+
+==== RESULT: PASS=45 FAIL=0 ====

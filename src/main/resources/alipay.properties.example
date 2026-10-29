@@ -1,0 +1,28 @@
+# ============================================================
+# 支付宝沙箱配置模板
+# 使用方式: 复制本文件为 alipay.properties, 填入自己的沙箱应用信息
+# 获取密钥: https://open.alipay.com/develop/sandbox/app
+# ============================================================
+
+# 沙箱应用 appId
+alipay.appId=your-sandbox-app-id
+
+# 沙箱网关地址 (固定, 不用改)
+alipay.gatewayUrl=https://openapi-sandbox.dl.alipaydev.com/gateway.do
+
+# 应用私钥 (RSA2, PKCS#8 格式, 去掉头尾换行)
+alipay.appPrivateKey=your-application-private-key
+
+# 支付宝公钥 (沙箱应用详情页提供)
+alipay.alipayPublicKey=your-alipay-public-key
+
+# 签名类型 (固定)
+alipay.signType=RSA2
+alipay.charset=UTF-8
+alipay.format=JSON
+
+# 前端同步跳转地址 (支付完成后浏览器跳回的页面)
+alipay.returnUrl=/api/alipay/return
+
+# 后端异步通知地址 (本地无公网 HTTPS 时留空, 改用主动查询)
+alipay.notifyUrl=

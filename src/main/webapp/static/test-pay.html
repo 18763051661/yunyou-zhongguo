@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>支付宝沙箱支付测试</title>
+<style>
+body{font-family:'PingFang SC','Microsoft YaHei',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:linear-gradient(135deg,#0e9f6e,#34d399);color:#fff}
+.box{background:#fff;color:#1f2937;border-radius:20px;padding:40px 56px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;max-width:520px}
+h3{margin:0 0 16px;font-size:22px;color:#0e9f6e}
+.info{color:#4b5563;font-size:15px;margin:6px 0}
+.amount{font-size:36px;font-weight:800;color:#ff7a45;margin:14px 0}
+button{background:#0e9f6e;color:#fff;border:0;padding:14px 40px;border-radius:999px;font-size:17px;font-weight:600;cursor:pointer;margin-top:20px;transition:transform .15s}
+button:hover{transform:translateY(-2px)}
+.tip{margin-top:18px;padding:12px;background:#fef3c7;border-radius:10px;font-size:13px;color:#92400e;text-align:left}
+.tip b{color:#b2730a}
+</style></head><body>
+<div class="box">
+<h3>云游中国 · 支付宝沙箱支付</h3>
+<div class="info">订单号: SN202609291619471009</div>
+<div class="info">景点: 故宫博物院 × 1 张</div>
+<div class="amount">¥ 60.00</div>
+<button id="submitBtn">🟦 立即支付</button>
+<div class="tip">
+<b>测试步骤:</b><br>
+1. 点击"立即支付"按钮,会跳转到支付宝沙箱收银台<br>
+2. 用沙箱买家账号登录:<br>
+&nbsp;&nbsp;&nbsp;账号: circfg8385@sandbox.com<br>
+&nbsp;&nbsp;&nbsp;密码: 111111<br>
+3. 付款成功后自动跳回,订单变为"已支付"
+</div>
+</div>
+<form name="punchout_form" method="post" action="https://openapi-sandbox.dl.alipaydev.com/gateway.do?charset=UTF-8&method=alipay.trade.page.pay&sign=epTTxHtHRrwyZANIMlB6328Q75NS3xP13302V3zwxo598XoaYB8i7VCfRfetJkn7EfQiB7eZ6hEH%2FUzBLNvUlyb0g3RHBfLU4B60jJjwRqjZUM%2F1%2FDc6DlSNT9x9CM35Tr1IfEguzbSg8yMa4LvwHHlYfQOHg1pg%2F8ZLizxl%2FKR3%2FAe4yJ7MQDDkYWNExUfAH%2Bsh7cpsd5tVanxlyS8xtKaYozKfuRddDgXioMbsvIZZQK8QypXE3B%2FoKDyIY2GyUMTsIxZI%2Fx6ohRjFlaOiysPULtFPOAK23CIeE1OrNalOzs3nKlEqueBQmbw9fdX9wZNOStD3UYip00YXMqBF3g%3D%3D&return_url=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Falipay%2Freturn&version=1.0&app_id=9021000168681158&sign_type=RSA2&timestamp=2026-09-29+16%3A19%3A47&alipay_sdk=alipay-sdk-java-4.40.909.ALL&format=JSON">
+<input type="hidden" name="biz_content" value="{&quot;out_trade_no&quot;:&quot;SN202609291619471009&quot;,&quot;total_amount&quot;:&quot;60.00&quot;,&quot;subject&quot;:&quot;故宫博物院 ×1张&quot;,&quot;product_code&quot;:&quot;FAST_INSTANT_TRADE_PAY&quot;,&quot;timeout_express&quot;:&quot;30m&quot;}">
+<input type="submit" value="立即支付" style="display:none" >
+</form>
+<script>document.forms[0].submit();</script>
+<script>document.getElementById('submitBtn').onclick=function(){document.forms.punchout_form.submit();};</script>
+</body></html>

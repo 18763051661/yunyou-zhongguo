@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>云游中国 · 管理后台</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f0f2f5; color: #2c3e50; min-height: 100vh; }
+  .topbar { background: #1a5276; color: #fff; padding: 14px 28px; display: flex; justify-content: space-between; align-items: center; }
+  .topbar h1 { font-size: 18px; font-weight: 600; }
+  .topbar .ops { display: flex; gap: 10px; align-items: center; font-size: 13px; }
+  .topbar a { color: #aed6f1; text-decoration: none; margin-right: 8px; }
+  .topbar button { background: transparent; border: 1px solid #7fb3d5; color: #fff; padding: 5px 14px; border-radius: 4px; cursor: pointer; }
+  .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+  .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08); padding: 22px; margin-bottom: 18px; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+  .tabs button { border: none; background: #e8eef3; padding: 9px 22px; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 14px; }
+  .tabs button.active { background: #1a5276; color: #fff; }
+  .toolbar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: center; }
+  .toolbar input { padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; width: 240px; }
+  .btn { border: none; padding: 8px 18px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+  .btn-primary { background: #1a5276; color: #fff; }
+  .btn-primary:hover { background: #21618c; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; border-radius: 3px; }
+  .btn-edit { background: #2471a3; color: #fff; }
+  .btn-del { background: #c0392b; color: #fff; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid #eee; text-align: left; white-space: nowrap; }
+  th { background: #f7f9fb; color: #5d6d7e; font-weight: 600; }
+  tr:hover td { background: #fbfdff; }
+  .tag { display: inline-block; padding: 2px 9px; border-radius: 10px; font-size: 12px; }
+  .tag-on { background: #d4efdf; color: #1e8449; }
+  .tag-off { background: #fdebd0; color: #b9770e; }
+  .tag-paid { background: #d4efdf; color: #1e8449; }
+  .tag-pending { background: #fdebd0; color: #b9770e; }
+  .tag-canceled { background: #eaecee; color: #7f8c8d; }
+  .pager { display: flex; gap: 10px; justify-content: flex-end; align-items: center; margin-top: 14px; font-size: 13px; color: #5d6d7e; }
+  .pager button { border: 1px solid #ccc; background: #fff; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
+  .pager button:disabled { opacity: .4; cursor: not-allowed; }
+  .mask { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 10; }
+  .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: #fff; border-radius: 8px; width: 640px; max-width: 94vw; max-height: 88vh; overflow: auto; z-index: 11; padding: 24px; }
+  .modal h3 { margin-bottom: 16px; font-size: 16px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  .field label { display: block; font-size: 12px; color: #5d6d7e; margin-bottom: 4px; }
+  .field input, .field select, .field textarea { width: 100%; padding: 7px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; font-family: inherit; }
+  .field textarea { resize: vertical; min-height: 54px; }
+  .modal-foot { margin-top: 18px; text-align: right; display: flex; gap: 10px; justify-content: flex-end; }
+  .btn-ghost { background: #eaecee; color: #2c3e50; }
+  #loginView { display: flex; justify-content: center; padding-top: 12vh; }
+  #loginView .card { width: 360px; }
+  #loginView h2 { font-size: 20px; margin-bottom: 6px; }
+  #loginView p.sub { font-size: 13px; color: #7f8c8d; margin-bottom: 18px; }
+  #loginView input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 12px; font-size: 14px; }
+  .msg { padding: 9px 14px; border-radius: 4px; font-size: 13px; margin-bottom: 12px; display: none; }
+  .msg-err { background: #fdedec; color: #c0392b; }
+  .msg-ok { background: #d4efdf; color: #1e8449; }
+  .empty { text-align: center; color: #95a5a6; padding: 30px 0; }
+</style>
+</head>
+<body>
+
+<!-- 登录视图 -->
+<div id="loginView">
+  <div class="card">
+    <h2>云游中国 · 管理后台</h2>
+    <p class="sub">请使用管理员账号登录（演示：admin / admin123）</p>
+    <div id="loginMsg" class="msg msg-err"></div>
+    <input id="loginUser" placeholder="管理员账号" autocomplete="username">
+    <input id="loginPass" type="password" placeholder="密码" autocomplete="current-password">
+    <button class="btn btn-primary" style="width:100%" onclick="doLogin()">登 录</button>
+  </div>
+</div>
+
+<!-- 主视图 -->
+<div id="mainView" style="display:none">
+  <div class="topbar">
+    <h1>云游中国 · 管理后台</h1>
+    <div class="ops">
+      <a href="/" target="_blank">打开前台</a>
+      <span id="adminName"></span>
+      <button onclick="doLogout()">退出</button>
+    </div>
+  </div>
+  <div class="container">
+    <div class="tabs">
+      <button id="tabSpot" class="active" onclick="switchTab('spot')">景点管理</button>
+      <button id="tabOrder" onclick="switchTab('order')">订单管理</button>
+      <button id="tabLog" onclick="switchTab('log')">操作日志</button>
+    </div>
+
+    <!-- 景点管理 -->
+    <div id="paneSpot" class="card">
+      <div class="toolbar">
+        <input id="spotKw" placeholder="按名称 / 省份 / 城市搜索" onkeydown="if(event.key==='Enter')loadSpots(1)">
+        <button class="btn btn-primary" onclick="loadSpots(1)">搜索</button>
+        <span style="flex:1"></span>
+        <button class="btn btn-primary" onclick="openEdit(null)">+ 新增景点</button>
+      </div>
+      <div id="spotMsg" class="msg"></div>
+      <table>
+        <thead><tr>
+          <th>ID</th><th>名称</th><th>省份</th><th>城市</th><th>门票(¥)</th>
+          <th>评分</th><th>状态</th><th>操作</th>
+        </tr></thead>
+        <tbody id="spotBody"></tbody>
+      </table>
+      <div class="pager">
+        <span id="spotPageInfo"></span>
+        <button id="spotPrev" onclick="loadSpots(spotPage-1)">上一页</button>
+        <button id="spotNext" onclick="loadSpots(spotPage+1)">下一页</button>
+      </div>
+    </div>
+
+    <!-- 订单管理 -->
+    <div id="paneOrder" class="card" style="display:none">
+      <div class="toolbar">
+        <input id="orderKw" placeholder="按订单号 / 景点 / 联系人搜索" onkeydown="if(event.key==='Enter')loadOrders(1)">
+        <button class="btn btn-primary" onclick="loadOrders(1)">搜索</button>
+      </div>
+      <table>
+        <thead><tr>
+          <th>订单号</th><th>景点</th><th>数量</th><th>金额(¥)</th>
+          <th>联系人</th><th>电话</th><th>状态</th><th>下单时间</th>
+        </tr></thead>
+        <tbody id="orderBody"></tbody>
+      </table>
+      <div class="pager">
+        <span id="orderPageInfo"></span>
+        <button id="orderPrev" onclick="loadOrders(orderPage-1)">上一页</button>
+        <button id="orderNext" onclick="loadOrders(orderPage+1)">下一页</button>
+      </div>
+    </div>
+
+    <!-- 操作日志(AOP 审计) -->
+    <div id="paneLog" class="card" style="display:none">
+      <div class="toolbar">
+        <span class="hint">由 Spring AOP 切面自动记录管理端写操作, 无需业务代码参与</span>
+      </div>
+      <table>
+        <thead><tr>
+          <th>时间</th><th>操作人</th><th>动作</th><th>操作对象</th><th>触发方法</th><th>来源 IP</th>
+        </tr></thead>
+        <tbody id="logBody"></tbody>
+      </table>
+      <div class="pager">
+        <span id="logPageInfo"></span>
+        <button id="logPrev" onclick="loadLogs(logPage-1)">上一页</button>
+        <button id="logNext" onclick="loadLogs(logPage+1)">下一页</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 景点编辑弹窗 -->
+<div id="editMask" class="mask" onclick="closeEdit()"></div>
+<div id="editModal" class="modal">
+  <h3 id="editTitle">新增景点</h3>
+  <div id="editMsg" class="msg msg-err"></div>
+  <div class="form-grid">
+    <div class="field"><label>名称 *</label><input id="f_name"></div>
+    <div class="field"><label>分类 *</label><select id="f_categoryId"></select></div>
+    <div class="field"><label>省份</label><input id="f_province"></div>
+    <div class="field"><label>城市</label><input id="f_city"></div>
+    <div class="field"><label>区域(华东/华北…)</label><input id="f_region"></div>
+    <div class="field"><label>别名</label><input id="f_alias"></div>
+    <div class="field"><label>门票价格(¥, 0=免费)</label><input id="f_price" type="number" min="0" step="0.01"></div>
+    <div class="field"><label>开放时间</label><input id="f_openTime" placeholder="如 08:00-17:30"></div>
+    <div class="field"><label>经度</label><input id="f_lng" type="number" step="0.0001"></div>
+    <div class="field"><label>纬度</label><input id="f_lat" type="number" step="0.0001"></div>
+    <div class="field full"><label>地址</label><input id="f_address"></div>
+    <div class="field full"><label>标签(逗号分隔)</label><input id="f_tags"></div>
+    <div class="field full"><label>简介</label><textarea id="f_summary"></textarea></div>
+    <div class="field full"><label>详细介绍</label><textarea id="f_description" rows="4"></textarea></div>
+    <div class="field"><label>状态</label>
+      <select id="f_status"><option value="1">上架</option><option value="0">下架</option></select>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn btn-ghost" onclick="closeEdit()">取消</button>
+    <button class="btn btn-primary" onclick="saveSpot()">保 存</button>
+  </div>
+</div>
+
+<script>
+let spotPage = 1, orderPage = 1, categories = [], editingId = null;
+
+async function api(url, options = {}) {
+  const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...options });
+  const body = await res.json();
+  if (body.code !== 0) {
+    const err = new Error(body.msg || '请求失败');
+    err.code = body.code;
+    throw err;
+  }
+  return body.data;
+}
+
+function esc(s) { return s == null ? '' : String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function showMsg(id, text, ok) { const el = document.getElementById(id); el.textContent = text; el.className = 'msg ' + (ok ? 'msg-ok' : 'msg-err'); el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3000); }
+
+/* ---------- 登录 ---------- */
+async function checkLogin() {
+  try {
+    const me = await api('/api/admin/me');
+    applyLogin(me.login ? me.username : null);
+  } catch (e) { applyLogin(null); }
+}
+function applyLogin(username) {
+  document.getElementById('loginView').style.display = username ? 'none' : 'flex';
+  document.getElementById('mainView').style.display = username ? 'block' : 'none';
+  if (username) { document.getElementById('adminName').textContent = username; loadSpots(1); loadCategories(); }
+}
+async function doLogin() {
+  const username = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
+  try {
+    const data = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+    applyLogin(data.username);
+  } catch (e) { showMsg('loginMsg', e.message, false); }
+}
+async function doLogout() { await api('/api/admin/logout', { method: 'POST' }); applyLogin(null); }
+
+/* ---------- 标签页 ---------- */
+function switchTab(tab) {
+  document.getElementById('tabSpot').classList.toggle('active', tab === 'spot');
+  document.getElementById('tabOrder').classList.toggle('active', tab === 'order');
+  document.getElementById('tabLog').classList.toggle('active', tab === 'log');
+  document.getElementById('paneSpot').style.display = tab === 'spot' ? 'block' : 'none';
+  document.getElementById('paneOrder').style.display = tab === 'order' ? 'block' : 'none';
+  document.getElementById('paneLog').style.display = tab === 'log' ? 'block' : 'none';
+  if (tab === 'order') loadOrders(1);
+  if (tab === 'log') loadLogs(1);
+}
+
+/* ---------- 分类 ---------- */
+async function loadCategories() {
+  try {
+    categories = await api('/api/categories') || [];
+    const sel = document.getElementById('f_categoryId');
+    sel.innerHTML = '<option value="">请选择</option>' + categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  } catch (e) { /* 静默 */ }
+}
+
+/* ---------- 景点 ---------- */
+async function loadSpots(page) {
+  spotPage = page;
+  const kw = document.getElementById('spotKw').value.trim();
+  try {
+    const data = await api(`/api/admin/spots?page=${page}&size=10&keyword=${encodeURIComponent(kw)}`);
+    const rows = data.list || [];
+    document.getElementById('spotBody').innerHTML = rows.length ? rows.map(s => `
+      <tr>
+        <td>${s.id}</td>
+        <td>${esc(s.name)}</td>
+        <td>${esc(s.province)}</td>
+        <td>${esc(s.city)}</td>
+        <td>${s.price == null ? '-' : Number(s.price).toFixed(2)}</td>
+        <td>${s.rating == null ? '-' : Number(s.rating).toFixed(1)}</td>
+        <td><span class="tag ${s.status === 1 ? 'tag-on' : 'tag-off'}">${s.status === 1 ? '上架' : '下架'}</span></td>
+        <td>
+          <button class="btn btn-sm btn-edit" onclick='openEdit(${JSON.stringify(s).replace(/'/g,"&#39;")})'>编辑</button>
+          <button class="btn btn-sm btn-del" onclick="delSpot(${s.id}, '${esc(s.name).replace(/'/g,"\\'")}')">删除</button>
+        </td>
+      </tr>`).join('') : '<tr><td colspan="8" class="empty">暂无数据</td></tr>';
+    document.getElementById('spotPageInfo').textContent = `共 ${data.total} 条 · 第 ${data.page}/${data.totalPages || 1} 页`;
+    document.getElementById('spotPrev').disabled = data.page <= 1;
+    document.getElementById('spotNext').disabled = data.page >= data.totalPages;
+  } catch (e) { if (e.code === 401) applyLogin(null); }
+}
+async function delSpot(id, name) {
+  if (!confirm(`确定删除景点「${name}」? 该操作不可恢复`)) return;
+  try { await api(`/api/admin/spots/${id}`, { method: 'DELETE' }); showMsg('spotMsg', '删除成功', true); loadSpots(spotPage); }
+  catch (e) { showMsg('spotMsg', e.message, false); }
+}
+/* ---------- 操作日志(AOP 审计) ---------- */
+let logPage = 1;
+async function loadLogs(page) {
+  logPage = page;
+  try {
+    const data = await api(`/api/admin/logs?page=${page}&size=10`);
+    const rows = data.list || [];
+    document.getElementById('logBody').innerHTML = rows.length ? rows.map(l => `
+      <tr>
+        <td>${l.createdAt ? new Date(l.createdAt).toLocaleString() : '-'}</td>
+        <td>${esc(l.operator)}</td>
+        <td><span class="tag tag-on">${esc(l.action)}</span></td>
+        <td>${esc(l.target)}</td>
+        <td>${esc(l.detail)}</td>
+        <td>${esc(l.ip)}</td>
+      </tr>`).join('') : '<tr><td colspan="6" class="empty">暂无日志, 管理端执行一次新增/修改/删除后自动生成</td></tr>';
+    document.getElementById('logPageInfo').textContent = `共 ${data.total} 条 · 第 ${data.page}/${data.totalPages || 1} 页`;
+    document.getElementById('logPrev').disabled = data.page <= 1;
+    document.getElementById('logNext').disabled = data.page >= data.totalPages;
+  } catch (e) { if (e.code === 401) applyLogin(null); }
+}
+function openEdit(spot) {
+  editingId = spot ? spot.id : null;
+  document.getElementById('editTitle').textContent = spot ? `编辑景点 #${spot.id}` : '新增景点';
+  document.getElementById('editMsg').style.display = 'none';
+  const set = (id, v) => document.getElementById(id).value = v == null ? '' : v;
+  set('f_name', spot && spot.name); set('f_categoryId', spot && spot.categoryId);
+  set('f_province', spot && spot.province); set('f_city', spot && spot.city);
+  set('f_region', spot && spot.region); set('f_alias', spot && spot.alias);
+  set('f_price', spot && spot.price); set('f_openTime', spot && spot.openTime);
+  set('f_lng', spot && spot.lng); set('f_lat', spot && spot.lat);
+  set('f_address', spot && spot.address); set('f_tags', spot && spot.tags);
+  set('f_summary', spot && spot.summary); set('f_description', spot && spot.description);
+  set('f_status', spot ? (spot.status === 1 ? '1' : '0') : '1');
+  document.getElementById('editMask').style.display = 'block';
+  document.getElementById('editModal').style.display = 'block';
+}
+function closeEdit() {
+  document.getElementById('editMask').style.display = 'none';
+  document.getElementById('editModal').style.display = 'none';
+}
+async function saveSpot() {
+  const val = id => { const v = document.getElementById(id).value.trim(); return v === '' ? null : v; };
+  const payload = {
+    name: val('f_name'),
+    categoryId: val('f_categoryId') ? Number(val('f_categoryId')) : null,
+    province: val('f_province'), city: val('f_city'), region: val('f_region'),
+    alias: val('f_alias'),
+    price: val('f_price') ? Number(val('f_price')) : null,
+    openTime: val('f_openTime'),
+    lng: val('f_lng') ? Number(val('f_lng')) : null,
+    lat: val('f_lat') ? Number(val('f_lat')) : null,
+    address: val('f_address'), tags: val('f_tags'),
+    summary: val('f_summary'), description: val('f_description'),
+    status: Number(val('f_status'))
+  };
+  try {
+    if (editingId) {
+      await api(`/api/admin/spots/${editingId}`, { method: 'PUT', body: JSON.stringify(payload) });
+    } else {
+      await api('/api/admin/spots', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    closeEdit(); showMsg('spotMsg', '保存成功', true); loadSpots(spotPage);
+  } catch (e) { showMsg('editMsg', e.message, false); }
+}
+
+/* ---------- 订单 ---------- */
+const payTag = s => ({ PAID: 'tag-paid', PENDING: 'tag-pending', CANCELED: 'tag-canceled' }[s] || 'tag-canceled');
+async function loadOrders(page) {
+  orderPage = page;
+  const kw = document.getElementById('orderKw').value.trim();
+  try {
+    const data = await api(`/api/admin/orders?page=${page}&size=10&keyword=${encodeURIComponent(kw)}`);
+    const rows = data.list || [];
+    document.getElementById('orderBody').innerHTML = rows.length ? rows.map(o => `
+      <tr>
+        <td>${esc(o.orderNo)}</td>
+        <td>${esc(o.spotName)}</td>
+        <td>${o.quantity}</td>
+        <td>${Number(o.totalAmount).toFixed(2)}</td>
+        <td>${esc(o.contactName)}</td>
+        <td>${esc(o.contactPhone)}</td>
+        <td><span class="tag ${payTag(o.payStatus)}">${esc(o.payStatus)}</span></td>
+        <td>${esc(o.createdAt)}</td>
+      </tr>`).join('') : '<tr><td colspan="8" class="empty">暂无订单</td></tr>';
+    document.getElementById('orderPageInfo').textContent = `共 ${data.total} 条 · 第 ${data.page}/${data.totalPages || 1} 页`;
+    document.getElementById('orderPrev').disabled = data.page <= 1;
+    document.getElementById('orderNext').disabled = data.page >= data.totalPages;
+  } catch (e) { if (e.code === 401) applyLogin(null); }
+}
+
+checkLogin();
+</script>
+</body>
+</html>

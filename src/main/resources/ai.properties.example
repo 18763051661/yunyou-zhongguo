@@ -1,0 +1,30 @@
+# ============================================================
+# AI 助教大模型配置模板 (OpenAI 兼容协议)
+# 使用方式: 复制本文件为 ai.properties, 填入自己的 API Key
+# providers: 按顺序尝试, 全部失败时自动回退本地规则知识库
+# ============================================================
+ai.providers=deepseek,qwen,doubao
+
+# 通义千问 DashScope 兼容模式 (备用)
+ai.qwen.base=https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions
+ai.qwen.key=sk-your-qwen-key
+ai.qwen.model=qwen-turbo
+ai.qwen.timeout-ms=8000
+
+# DeepSeek (主力; OpenAI 兼容协议, deepseek-chat 为非思维链版本)
+# 申请地址: https://platform.deepseek.com
+ai.deepseek.base=https://api.deepseek.com/chat/completions
+ai.deepseek.key=sk-your-deepseek-key
+ai.deepseek.model=deepseek-chat
+ai.deepseek.timeout-ms=10000
+
+# 豆包 AI (火山方舟 Ark, 备用)
+ai.doubao.base=https://ark.cn-beijing.volces.com/api/v3/chat/completions
+ai.doubao.key=your-doubao-ark-key
+ai.doubao.model=ep-your-endpoint-id
+ai.doubao.no-thinking=true
+ai.doubao.timeout-ms=15000
+
+ai.timeout-ms=8000
+ai.max-tokens=600
+ai.temperature=0.6

@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>云游中国 · 完整项目文档（20页）</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; color: #1f2937; background: #9ca3af; }
+  .page {
+    width: 210mm; height: 297mm; background: #fff; margin: 8px auto;
+    padding: 16mm 16mm 14mm; position: relative; overflow: hidden;
+    page-break-after: always; display: flex; flex-direction: column;
+  }
+  @media print { body { background:#fff; } .page { margin: 0; } }
+  /* 页眉页脚 */
+  .ph { display: flex; justify-content: space-between; align-items: center; font-size: 9.5px; color: #9ca3af; border-bottom: 1.5px solid #0e9f6e; padding-bottom: 5px; margin-bottom: 10px; }
+  .ph b { color: #0e9f6e; }
+  .pf { position: absolute; bottom: 7mm; left: 16mm; right: 16mm; display: flex; justify-content: space-between; font-size: 9px; color: #c0c7d0; }
+  /* 标题 */
+  h2.pt { font-size: 21px; color: #0b7a54; margin-bottom: 3px; }
+  .pt-sub { font-size: 10.5px; color: #6b7280; margin-bottom: 10px; }
+  h3 { font-size: 13.5px; color: #0e9f6e; margin: 9px 0 5px; padding-left: 8px; border-left: 4px solid #0e9f6e; }
+  h4 { font-size: 11.5px; color: #374151; margin: 6px 0 3px; }
+  p, li { font-size: 10.8px; line-height: 1.62; color: #374151; }
+  ul, ol { padding-left: 17px; margin: 3px 0; }
+  li { margin-bottom: 2px; }
+  /* 表格 */
+  table { width: 100%; border-collapse: collapse; margin: 5px 0; }
+  th, td { border: 1px solid #d7dee6; padding: 4px 7px; font-size: 10.2px; text-align: left; vertical-align: top; }
+  th { background: #e8f7f0; color: #0b7a54; font-weight: 700; }
+  tr:nth-child(even) td { background: #fafcfb; }
+  /* 代码 */
+  pre { background: #f4f6f8; border: 1px solid #e3e8ee; border-radius: 5px; padding: 7px 9px; font-family: Consolas, monospace; font-size: 9.3px; line-height: 1.5; overflow: hidden; margin: 5px 0; color: #24313f; }
+  code { font-family: Consolas, monospace; background: #eef3f0; padding: 0 4px; border-radius: 3px; font-size: 9.8px; color: #0b7a54; }
+  /* 组件 */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .card { border: 1px solid #e3e8ee; border-radius: 7px; padding: 8px 10px; background: #fbfdfc; }
+  .card h4 { margin-top: 0; color: #0b7a54; }
+  .badge { display: inline-block; background: #e8f7f0; color: #0b7a54; border-radius: 999px; padding: 2px 11px; font-size: 10px; font-weight: 700; margin: 2px 3px 2px 0; }
+  .callout { background: #f0faf5; border-left: 4px solid #0e9f6e; border-radius: 0 6px 6px 0; padding: 7px 10px; font-size: 10.5px; margin: 6px 0; color: #1f5c44; }
+  .warn { background: #fff8ec; border-left: 4px solid #f59e0b; color: #7a5a13; }
+  .stat { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; margin: 8px 0; }
+  .stat div { text-align: center; border: 1px solid #e3e8ee; border-radius: 7px; padding: 8px 2px; background: #fbfdfc; }
+  .stat b { display: block; font-size: 17px; color: #0b7a54; }
+  .stat span { font-size: 9px; color: #6b7280; }
+  /* 封面 */
+  .cover { background: linear-gradient(150deg, #063d2b 0%, #0b7a54 55%, #0e9f6e 100%); color: #fff; justify-content: center; padding: 22mm; }
+  .cover .logo { font-size: 44px; margin-bottom: 10px; }
+  .cover h1 { font-size: 40px; letter-spacing: 2px; margin-bottom: 8px; }
+  .cover .sub { font-size: 16px; opacity: .92; margin-bottom: 26px; }
+  .cover .chips span { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); border-radius: 999px; padding: 4px 14px; font-size: 11.5px; margin-right: 7px; display: inline-block; margin-bottom: 8px; }
+  .cover .meta { margin-top: 34px; font-size: 12px; opacity: .88; line-height: 1.9; }
+  .cover .cstat { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-top: 30px; }
+  .cover .cstat div { background: rgba(255,255,255,.10); border: 1px solid rgba(255,255,255,.22); border-radius: 9px; padding: 11px 4px; text-align: center; }
+  .cover .cstat b { font-size: 21px; display: block; }
+  .cover .cstat span { font-size: 10px; opacity: .85; }
+  /* 目录 */
+  .toc { columns: 2; column-gap: 26px; margin-top: 6px; }
+  .toc div { font-size: 11.3px; padding: 5.5px 4px; border-bottom: 1px dashed #dfe5ea; break-inside: avoid; display: flex; justify-content: space-between; }
+  .toc b { color: #0e9f6e; margin-right: 8px; }
+  /* 架构图 */
+  .arch { display: flex; flex-direction: column; gap: 5px; margin: 7px 0; }
+  .arch .layer { border: 1.4px solid #0e9f6e; border-radius: 7px; padding: 6px 10px; background: #f2fbf7; display: flex; align-items: center; gap: 10px; }
+  .arch .layer b { color: #0b7a54; min-width: 128px; font-size: 11px; }
+  .arch .layer span { font-size: 10px; color: #4b5563; }
+  .arch .arrow { text-align: center; color: #0e9f6e; font-size: 11px; line-height: .8; }
+  /* 状态机 */
+  .fsm { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
+  .fsm .st { border: 2px solid #0e9f6e; color: #0b7a54; border-radius: 999px; padding: 6px 16px; font-weight: 800; font-size: 12px; background: #f2fbf7; }
+  .fsm .st.off { border-color: #9ca3af; color: #6b7280; background: #f6f7f8; }
+  .fsm .arr { color: #0e9f6e; font-size: 12px; font-weight: 800; }
+</style>
+</head>
+<body>
+
+<!-- ============ 第 1 页 封面 ============ -->
+<section class="page cover">
+  <div class="logo">🏞️</div>
+  <h1>云游中国</h1>
+  <div class="sub">全国景点智能导览推荐系统 · 基于 SSM 框架的全栈旅游平台</div>
+  <div class="chips">
+    <span>Spring 7.0.9</span><span>Spring MVC</span><span>MyBatis 3.5.19</span><span>MySQL 8</span>
+    <span>Tomcat 11 · Jakarta EE</span><span>DeepSeek / 通义千问 / 豆包</span><span>VR 360° 全景</span>
+  </div>
+  <div class="cstat">
+    <div><b>102</b><span>Java 类</span></div>
+    <div><b>50+</b><span>REST 接口</span></div>
+    <div><b>14</b><span>JSP 页面</span></div>
+    <div><b>8</b><span>核心创新点</span></div>
+  </div>
+  <div class="meta">
+    课程名称：Java Web 应用开发（大三）<br>
+    项目类型：SSM 框架综合实践项目<br>
+    文档版本：v1.0 · 2026 年 10 月
+  </div>
+</section>
+
+<!-- ============ 第 2 页 目录 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>目录</span></div>
+  <h2 class="pt">目 录</h2>
+  <div class="pt-sub">Contents · 共 20 页</div>
+  <div class="toc">
+    <div><span><b>01</b> 封面</span><span>P1</span></div>
+    <div><span><b>02</b> 目录</span><span>P2</span></div>
+    <div><span><b>03</b> 项目概述</span><span>P3</span></div>
+    <div><span><b>04</b> 技术选型</span><span>P4</span></div>
+    <div><span><b>05</b> 系统架构</span><span>P5</span></div>
+    <div><span><b>06</b> 数据库设计</span><span>P6</span></div>
+    <div><span><b>07</b> 功能模块总览</span><span>P7</span></div>
+    <div><span><b>08</b> 景点导览与智能推荐</span><span>P8</span></div>
+    <div><span><b>09</b> 智能出游规划器</span><span>P9</span></div>
+    <div><span><b>10</b> VR 真 360° 全景环景舱</span><span>P10</span></div>
+    <div><span><b>11</b> 票务订单与事务状态机</span><span>P11</span></div>
+    <div><span><b>12</b> 双通道支付架构</span><span>P12</span></div>
+    <div><span><b>13</b> AI 四引擎故障转移</span><span>P13</span></div>
+    <div><span><b>14</b> RAG 数据约束与 AOP 审计</span><span>P14</span></div>
+    <div><span><b>15</b> 双视图渲染与地图可视化</span><span>P15</span></div>
+    <div><span><b>16</b> 功能创新集锦</span><span>P16</span></div>
+    <div><span><b>17</b> API 接口概览</span><span>P17</span></div>
+    <div><span><b>18</b> 部署与运行</span><span>P18</span></div>
+    <div><span><b>19</b> 项目统计与难点攻克</span><span>P19</span></div>
+    <div><span><b>20</b> 总结与展望</span><span>P20</span></div>
+  </div>
+  <div class="callout" style="margin-top:14px;">
+    本文档完整覆盖「云游中国」项目的立项背景、架构设计、数据库设计、核心功能实现、八大创新点、接口清单、部署方案与总结展望，可作为课程答辩与代码评审的完整依据。
+  </div>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>02</span></div>
+</section>
+
+<!-- ============ 第 3 页 项目概述 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>01 项目概述</span></div>
+  <h2 class="pt">1. 项目概述</h2>
+  <div class="pt-sub">为什么做这个项目 · 解决什么问题 · 做到什么程度</div>
+  <h3>1.1 立项背景</h3>
+  <p>旅行决策场景中普遍存在三个痛点：① 攻略信息真假难辨，"照骗"泛滥；② 景点信息分散，行程规划耗时；③ 无法在出行前直观感受景区实景。本项目旨在构建一个<b>数据真实、体验沉浸、决策智能</b>的一站式旅游导览平台。</p>
+  <h3>1.2 项目定位</h3>
+  <p>「云游中国」是一个基于 SSM 框架（Spring + Spring MVC + MyBatis）的全国景点智能导览系统，覆盖 <b>31 个省份的 219 个真实景点</b>，提供景点导览、智能推荐、AI 行程规划、VR 360° 实景游览、在线购票支付、管理后台等完整功能闭环。</p>
+  <h3>1.3 设计原则</h3>
+  <div class="grid2">
+    <div class="card"><h4>数据真实</h4><p>所有景点数据来自真实整理，杜绝假数据；AI 讲解受 RAG 约束，只允许基于库内真实景点作答，从源头防止幻觉。</p></div>
+    <div class="card"><h4>架构规范</h4><p>严格遵循 SSM 五层架构（Controller → Service → DAO → Mapper → MySQL），注解驱动零 XML，IoC / DI / AOP / 声明式事务全量应用。</p></div>
+    <div class="card"><h4>体验沉浸</h4><p>纯 CSS 3D 实现真 360° 全景环景舱，配合实拍六面贴图、AI 语音讲解与主题配乐，出行前即可"云游"景区。</p></div>
+    <div class="card"><h4>链路完整</h4><p>购票 → 支付 → 出票 → 退款全流程闭环，事务状态机保证数据一致，双通道支付架构支持扩展。</p></div>
+  </div>
+  <h3>1.4 核心指标</h3>
+  <div class="stat">
+    <div><b>102</b><span>Java 类</span></div>
+    <div><b>7074</b><span>代码行</span></div>
+    <div><b>50+</b><span>REST 接口</span></div>
+    <div><b>14</b><span>JSP 页面</span></div>
+    <div><b>219</b><span>真实景点</span></div>
+    <div><b>12</b><span>数据库表</span></div>
+  </div>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>03</span></div>
+</section>
+
+<!-- ============ 第 4 页 技术选型 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>02 技术选型</span></div>
+  <h2 class="pt">2. 技术选型</h2>
+  <div class="pt-sub">每一项选型都有明确理由 · 拒绝为用而用</div>
+  <h3>2.1 后端技术栈</h3>
+  <table>
+    <tr><th style="width:22%">技术</th><th style="width:18%">版本</th><th>选型理由</th></tr>
+    <tr><td>Spring Framework</td><td>7.0.9</td><td>IoC/DI 容器 + AOP 审计 + 声明式事务；7.x 基于 Jakarta EE，兼容 JDK 17/25 与 Tomcat 11</td></tr>
+    <tr><td>Spring MVC</td><td>7.0.9</td><td>RESTful（@RestController）与 JSP 视图（@Controller）双模式输出，支撑双视图架构</td></tr>
+    <tr><td>MyBatis</td><td>3.5.19</td><td>注解 SQL + 动态 SQL（&lt;script&gt;），SQL 可控性强，便于实现防注入白名单与手写物理分页</td></tr>
+    <tr><td>MySQL</td><td>8.x</td><td>utf8mb4 字符集，12 张表，InnoDB 事务引擎支撑订单状态机</td></tr>
+    <tr><td>Tomcat</td><td>11</td><td>Jakarta Servlet 6 容器，与 Spring 7 命名空间（jakarta.*）完全匹配</td></tr>
+    <tr><td>Jackson / HikariCP</td><td>—</td><td>JSON 序列化 / 高性能数据库连接池（Spring 内置集成）</td></tr>
+  </table>
+  <h3>2.2 前端技术栈</h3>
+  <table>
+    <tr><th style="width:22%">技术</th><th>说明</th></tr>
+    <tr><td>原生 JS SPA</td><td>零框架依赖，History 路由 + REST API 渲染，约 2100 行核心代码，体现前端功底</td></tr>
+    <tr><td>JSP + JSTL/EL</td><td>14 个传统视图页面，与 SPA 共用同一 Service 层，演示 Spring MVC 双视图能力</td></tr>
+    <tr><td>CSS 3D Transform</td><td>VR 立方体全景投影（相机置于立方体中心），零 WebGL 依赖</td></tr>
+    <tr><td>Leaflet 1.9.4</td><td>本地化部署（不依赖 CDN），高德瓦片源，219 个景点真实坐标可视化</td></tr>
+  </table>
+  <h3>2.3 AI 引擎选型</h3>
+  <table>
+    <tr><th style="width:22%">引擎</th><th style="width:26%">角色</th><th>说明</th></tr>
+    <tr><td>DeepSeek</td><td>主力引擎</td><td>deepseek-chat，负责智能规划与长文本讲解，超时 10s</td></tr>
+    <tr><td>通义千问</td><td>二级备用</td><td>qwen-turbo（实测比 qwen-plus 快 4 倍），超时 8s</td></tr>
+    <tr><td>豆包 AI</td><td>三级备用</td><td>火山方舟接入，超时 15s</td></tr>
+    <tr><td>本地规则库</td><td>最终兜底</td><td>断网/全故障时基于库内数据生成规则化回答，服务永不中断</td></tr>
+  </table>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>04</span></div>
+</section>
+
+<!-- ============ 第 5 页 系统架构 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>03 系统架构</span></div>
+  <h2 class="pt">3. 系统架构</h2>
+  <div class="pt-sub">SSM 五层架构 · 注解驱动零 XML · 一条请求的完整旅程</div>
+  <div class="arch">
+    <div class="layer"><b>视图层 View</b><span>SPA（原生 JS + History 路由）· 14 个 JSP（JSTL/EL）· admin.html 管理端 · VR 环景舱</span></div>
+    <div class="arrow">▼ HTTP（JSON / HTML）</div>
+    <div class="layer"><b>控制层 Controller</b><span>14 个 Controller，@RestController 返回 JSON / @Controller 渲染视图，DispatcherServlet 统一分发（WebAppInitializer 注册）</span></div>
+    <div class="arrow">▼ 接口调用</div>
+    <div class="layer"><b>业务层 Service</b><span>28 个（接口 + 实现），@Service 注解，@Transactional 声明式事务，业务规则与状态机全部在此层</span></div>
+    <div class="arrow">▼ 依赖注入</div>
+    <div class="layer"><b>持久层 DAO</b><span>@Repository DAO 实现类注入 MyBatis Mapper，隔离业务与 SQL 细节</span></div>
+    <div class="arrow">▼ SQL</div>
+    <div class="layer"><b>数据层 MySQL</b><span>12 张表 · InnoDB · utf8mb4 · 219 景点 / 335 评论 / 16 主题路线 / 订单与审计</span></div>
+  </div>
+  <h3>3.1 一次请求的完整链路</h3>
+  <pre>浏览器 GET /api/spots?province=四川&amp;sort=rating
+ → DispatcherServlet（WebAppInitializer 注册，替代 web.xml）
+ → SpotController.list()          @RestController + @RequestParam
+ → SpotService.listSpots()        @Service，sort 白名单映射防注入
+ → SpotDaoImpl → SpotMapper       @Repository，MyBatis 动态 SQL + 物理分页
+ → MySQL（索引命中）→ 逐层返回 → Jackson 序列化 JSON → 前端渲染</pre>
+  <h3>3.2 横切能力（贯穿五层）</h3>
+  <div class="grid3">
+    <div class="card"><h4>AOP 审计</h4><p>@Aspect 自动拦截管理端写操作，零侵入记录日志</p></div>
+    <div class="card"><h4>声明式事务</h4><p>@Transactional 保证订单状态流转原子性</p></div>
+    <div class="card"><h4>启动自举</h4><p>AppConfig 启动时幂等建表 + 加载种子数据</p></div>
+  </div>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>05</span></div>
+</section>
+
+<!-- ============ 第 6 页 数据库设计 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>04 数据库设计</span></div>
+  <h2 class="pt">4. 数据库设计</h2>
+  <div class="pt-sub">MySQL 8 · 12 张表 · InnoDB + utf8mb4 · 幂等建表自举</div>
+  <h3>4.1 表清单</h3>
+  <table>
+    <tr><th style="width:24%">表名</th><th>职责</th></tr>
+    <tr><td>scenic_spot</td><td>景点主表（219 条）：名称/省份/城市/坐标/评分/价格/简介/图片</td></tr>
+    <tr><td>user / review / favorite</td><td>用户、评论（335 条）、收藏</td></tr>
+    <tr><td>ticket_order</td><td>票务订单：order_no / status(PENDING→PAID→CANCELED) / pay_method / 金额</td></tr>
+    <tr><td>travel_plan</td><td>智能规划结果落库（AI 生成路线持久化）</td></tr>
+    <tr><td>vr_view_log</td><td>VR 打卡记录（用户/景点/时长/时间），支撑热度榜聚合</td></tr>
+    <tr><td>audit_log</td><td>AOP 审计日志（管理员/操作类型/对象/时间）</td></tr>
+    <tr><td>theme_route 等</td><td>主题路线（16 条）、足迹地图等支撑表</td></tr>
+  </table>
+  <h3>4.2 核心表结构示例：ticket_order</h3>
+  <pre>CREATE TABLE IF NOT EXISTS ticket_order (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  order_no   VARCHAR(40) NOT NULL UNIQUE,        -- 业务单号（幂等键）
+  user_id    BIGINT NOT NULL,
+  spot_id    BIGINT NOT NULL,
+  amount     DECIMAL(10,2) NOT NULL,
+  status     VARCHAR(12) NOT NULL DEFAULT 'PENDING',  -- 状态机字段
+  pay_method VARCHAR(12),                        -- ALIPAY / WECHAT / SANDBOX
+  create_time DATETIME, pay_time DATETIME
+);</pre>
+  <h3>4.3 建表与初始化策略</h3>
+  <ul>
+    <li><b>幂等建表</b>：全部使用 <code>CREATE TABLE IF NOT EXISTS</code>，AppConfig 启动自举时自动校验建表，空库自动灌入种子数据，一次启动即可运行；</li>
+    <li><b>字符集</b>：库表统一 utf8mb4；JDBC 连接串使用 <code>characterEncoding=UTF-8</code>，杜绝中文乱码；</li>
+    <li><b>查询优化</b>：省份/评分/热度榜高频查询建立索引；热度榜通过 vr_view_log 聚合（GROUP BY + COUNT）实现。</li>
+  </ul>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>06</span></div>
+</section>
+
+<!-- ============ 第 7 页 功能模块总览 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>05 功能模块总览</span></div>
+  <h2 class="pt">5. 功能模块总览</h2>
+  <div class="pt-sub">50+ REST 接口 · SPA 12 个板块 · 14 个 JSP 传统视图</div>
+  <h3>5.1 功能清单</h3>
+  <table>
+    <tr><th style="width:20%">模块</th><th>核心能力</th><th style="width:30%">技术要点</th></tr>
+    <tr><td>景点导览</td><td>搜索 / 省份筛选 / 多维排序 / 物理分页 / 详情</td><td>MyBatis 动态 SQL + 手写 LIMIT 分页</td></tr>
+    <tr><td>智能推荐</td><td>按偏好标签 / 评分 / 价格带推荐</td><td>SQL 条件聚合 + Service 层策略</td></tr>
+    <tr><td>智能规划</td><td>8 字段偏好问卷 → AI 生成个性化路线 → 落库</td><td>DeepSeek 主力 + 三引擎故障转移</td></tr>
+    <tr><td>VR 环景舱</td><td>真 360° 全景 / 三模式切换 / AI 语音讲解 / 打卡</td><td>纯 CSS 3D 立方体投影 + vr_view_log 落库</td></tr>
+    <tr><td>票务支付</td><td>下单 / 支付 / 出票二维码凭证 / 退款 / 删除</td><td>@Transactional 状态机 + 双通道支付</td></tr>
+    <tr><td>我的订单</td><td>票根式 UI / 状态筛选 / 主动查询补单</td><td>订单聚合统计 + alipay.trade.query</td></tr>
+    <tr><td>地图可视化</td><td>219 景点真实坐标标注 / 悬停名称 / 弹窗详情</td><td>Leaflet 本地化 + 高德瓦片 + /api/spots/map</td></tr>
+    <tr><td>AI 助教</td><td>景点问答 / 一句话游记生成</td><td>RAG 约束 + 本地兜底</td></tr>
+    <tr><td>管理后台</td><td>景点 / 订单 / 用户管理，审计日志自动记录</td><td>AOP @Aspect 零侵入审计</td></tr>
+  </table>
+  <h3>5.2 SPA 板块导航</h3>
+  <p>
+    <span class="badge">首页</span><span class="badge">景点导览</span><span class="badge">智能规划</span><span class="badge">智能推荐</span>
+    <span class="badge">虚拟游览</span><span class="badge">景点地图</span><span class="badge">我的订单</span><span class="badge">AI 助教</span>
+    <span class="badge">排行榜</span><span class="badge">省份指南</span><span class="badge">收藏夹</span><span class="badge">关于</span>
+  </p>
+  <h3>5.3 双视图访问入口</h3>
+  <pre>SPA 前台:  http://localhost:8080/            （REST API + 原生 JS）
+JSP 视图:  http://localhost:8080/page/home   （/page/ranking 等 14 页）
+管理后台:  http://localhost:8080/admin.html  （AOP 审计生效范围）</pre>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>07</span></div>
+</section>
+
+<!-- ============ 第 8 页 景点导览与智能推荐 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>06 核心功能</span></div>
+  <h2 class="pt">6. 景点导览与智能推荐</h2>
+  <div class="pt-sub">高频查询的安全与性能设计</div>
+  <h3>6.1 多条件动态查询</h3>
+  <p>支持关键字、省份、价格带、主题标签组合筛选，排序字段（评分/热度/价格）由 <b>Service 层白名单映射</b>后传入 SQL，从根本上杜绝排序注入。</p>
+  <pre>// SpotMapper —— MyBatis 注解 + 动态 SQL
+@Select("&lt;script&gt;SELECT * FROM scenic_spot WHERE status = 1" +
+  "&lt;if test='kw != null'&gt; AND (name LIKE CONCAT('%',#{kw},'%'))&lt;/if&gt;" +
+  "&lt;if test='province != null'&gt; AND province = #{province}&lt;/if&gt;" +
+  " ORDER BY ${safeSort} LIMIT #{offset}, #{size}&lt;/script&gt;")</pre>
+  <div class="callout">安全设计：#{ } 预编译防注入；${safeSort} 仅接收白名单映射值（rating/hot/price），用户输入永不直接拼接 SQL。</div>
+  <h3>6.2 手写物理分页</h3>
+  <p>不依赖 PageHints 插件，直接 <code>LIMIT offset,size</code> + COUNT 双查询，返回 <code>{list, total, page, size}</code> 结构，前端据此渲染分页条。</p>
+  <h3>6.3 智能推荐策略</h3>
+  <div class="grid3">
+    <div class="card"><h4>热门推荐</h4><p>按 vr_view_log 打卡热度聚合排序，真实用户行为驱动</p></div>
+    <div class="card"><h4>高分精选</h4><p>评分 ≥ 4.5 且评论数达标的景点池，保证口碑</p></div>
+    <div class="card"><h4>偏好匹配</h4><p>用户勾选的自然/人文/美食等标签与景点 tag 求交集加权</p></div>
+  </div>
+  <h3>6.4 景点图片流水线</h3>
+  <p>每个景点配真实图片：图片搜索 → 标题相关性匹配 → MD5 去重 → 服务端压缩 → 本地缓存。加载失败自动降级 <code>picsum.photos/seed/{spotId}</code> 稳定源，保证任何网络环境下页面不破图。</p>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>08</span></div>
+</section>
+
+<!-- ============ 第 9 页 智能出游规划器 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>07 核心功能</span></div>
+  <h2 class="pt">7. 智能出游规划器</h2>
+  <div class="pt-sub">8 字段偏好问卷 → AI 生成个性化路线 → 持久化落库</div>
+  <h3>7.1 交互流程</h3>
+  <pre>用户填写问卷（目的地省份 / 出行天数 / 同行人 / 预算 / 偏好主题 / 节奏 / 交通方式 / 特殊要求）
+ → POST /api/plan  → PlanService.generate()
+ → 组装 Prompt：RAG 注入该省真实景点数据（名称/评分/价格/坐标）
+ → AI 四引擎依次尝试（DeepSeek → 通义 → 豆包 → 本地规则）
+ → 解析结构化路线（Day1~DayN，含景点/顺序/理由）
+ → 落库 travel_plan 表 → 返回前端渲染时间轴</pre>
+  <h3>7.2 RAG 约束提示词（核心）</h3>
+  <pre>系统提示词要点：
+1. 你只能从下方【候选景点列表】中选择景点，禁止编造任何不存在的景点
+2. 每天安排 2-4 个景点，标注每个景点的推荐理由与预估花费
+3. 输出严格 JSON 格式：{days:[{day, spots:[{name, reason, cost}]}]}
+4. 候选数据（来自 MySQL，共 N 条）：[{"name":"九寨沟","rating":4.8,...}]</pre>
+  <h3>7.3 工程细节</h3>
+  <ul>
+    <li><b>超时分级</b>：DeepSeek 10s / 通义 8s / 豆包 15s，超时即切换下一引擎，总失败兜底本地规则；</li>
+    <li><b>结果缓存</b>：相同省份 + 偏好组合的规划结果落库复用，二次请求毫秒级返回；</li>
+    <li><b>双消费方式</b>：SPA 走 REST API，JSP 页面走 <code>@ModelAttribute</code> 表单绑定，同一 Service 两种呈现。</li>
+  </ul>
+  <div class="callout">实测：qwen-turbo 生成 5 日路线约 3.9s；DeepSeek 生成质量最高但需 8~10s——引擎分级正是质量与速度的权衡设计。</div>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>09</span></div>
+</section>
+
+<!-- ============ 第 10 页 VR 真 360° 全景 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>08 核心功能</span></div>
+  <h2 class="pt">8. VR 真 360° 全景环景舱</h2>
+  <div class="pt-sub">纯 CSS 3D 立方体投影 · 零 WebGL 依赖 · 全栈数据闭环</div>
+  <h3>8.1 三模式渲染架构</h3>
+  <table>
+    <tr><th style="width:18%">模式</th><th style="width:34%">实现</th><th>触发条件</th></tr>
+    <tr><td>sphere 真 360°</td><td>六面实拍贴图（_f/_r/_b/_l/_u/_d）构建立方体，相机置于中心</td><td>GET /api/pano/{spotId} 返回 available=true 时自动切入</td></tr>
+    <tr><td>pano 柱面环景</td><td>宽幅实拍图柱面排布</td><td>无立方体贴图但有宽幅素材</td></tr>
+    <tr><td>cube 3D 图墙</td><td>景点图片 3D 环绕图墙</td><td>兜底模式，保证任何景点可进 VR</td></tr>
+  </table>
+  <p>三模式<b>原地热切换</b>：配乐、AI 讲解、打卡状态全程保持，不重置体验。</p>
+  <h3>8.2 立方体投影原理（纯 CSS）</h3>
+  <pre>// buildSphere()：六面 div，每面 translateZ(-R) 推向远端，父容器旋转即环视
+face.style = `transform: rotateY(-90deg) translateZ(${-R}px)`;
+// FOV 视野换算：perspective = (viewportWidth / 2) / tan(hfov / 2)
+// 交互：拖拽环视（水平无限制/俯仰 ±85°）、滚轮调 FOV(50°~115°)、
+//       惯性甩动（速度衰减 0.94）、手机陀螺仪、自动全屏沉浸</pre>
+  <h3>8.3 全栈数据闭环（SSM 五层贯穿）</h3>
+  <pre>VR 内点击打卡 → POST /api/vr/view {spotId, duration}
+ → VrController → VrService → VrViewLogMapper → MySQL vr_view_log 落库
+ → 首页热度榜 GROUP BY 聚合 → 热门景点排序实时更新</pre>
+  <h3>8.4 沉浸配套</h3>
+  <p>AI 自动讲解（进舱即播 + 语音朗读）· 主题配乐（国风 / 我和你 / 亚洲雄风轮播，退出自动释放）· 滚轮缩放 · 手机端陀螺仪体感环视。</p>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>10</span></div>
+</section>
+
+<!-- ============ 第 11 页 票务订单与事务状态机 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>09 核心功能</span></div>
+  <h2 class="pt">9. 票务订单与事务状态机</h2>
+  <div class="pt-sub">@Transactional 原子流转 · 幂等保护 · 一致性保证</div>
+  <div class="fsm">
+    <div class="st">PENDING 待支付</div><div class="arr">──支付──▶</div>
+    <div class="st">PAID 已支付</div><div class="arr">──退款──▶</div>
+    <div class="st off">CANCELED 已取消</div>
+  </div>
+  <h3>9.1 状态机实现</h3>
+  <pre>@Transactional  // OrderServiceImpl —— 状态流转原子性
+public void markPaid(String orderNo) {
+    int rows = orderDao.casUpdateStatus(orderNo, "PENDING", "PAID");
+    // CAS 式 UPDATE：UPDATE ticket_order SET status='PAID'
+    //               WHERE order_no=? AND status='PENDING'
+    if (rows == 0) throw new IllegalStateException("状态冲突/重复支付");
+}</pre>
+  <div class="callout">幂等保护：CAS 条件更新保证同一订单并发重复回调只生效一次；非法流转（如 CANCELED → PAID）被状态条件天然拒绝。</div>
+  <h3>9.2 订单功能矩阵</h3>
+  <table>
+    <tr><th style="width:26%">功能</th><th>说明</th></tr>
+    <tr><td>下单</td><td>生成唯一 order_no，金额服务端计算（不信前端），初始 PENDING</td></tr>
+    <tr><td>支付确认</td><td>三通道（支付宝/微信/沙箱模拟）统一收敛到状态机 markPaid</td></tr>
+    <tr><td>主动补单</td><td>回调不可达时（校园网无公网），前端轮询触发 trade.query 主动对账</td></tr>
+    <tr><td>退款 / 删除</td><td>PAID → CANCELED（@Transactional）；删除为逻辑删除，审计可溯</td></tr>
+  </table>
+  <h3>9.3 票根式凭证</h3>
+  <p>已支付订单生成<b>票根 UI</b>：左侧票存（景点名/金额/单号）+ 打孔虚线分割 + 右侧信息区 + <b>二维码电子凭证</b>，视觉上模拟真实景区门票，细节拉满。</p>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>11</span></div>
+</section>
+
+<!-- ============ 第 12 页 双通道支付架构 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>10 核心功能</span></div>
+  <h2 class="pt">10. 双通道支付架构</h2>
+  <div class="pt-sub">策略模式平行接口 · 真实沙箱联调 · 共享状态机收敛</div>
+  <h3>10.1 架构设计</h3>
+  <pre>OrderController.pay(method)
+ ├─ ALIPAY → AlipayPayService（真实沙箱：RSA2 签名 / wap.pay 下单 / trade.query 对账 / notify 验签）
+ ├─ WECHAT → WeChatPayService（接口契约完整：createOrder / queryTradeStatus / verifyNotifySign）
+ └─ SANDBOX → 模拟通道（演示兜底，零网络依赖）
+        ↓ 三通道统一收敛
+ OrderService.pay() —— 同一个 @Transactional 状态机 PENDING → PAID</pre>
+  <h3>10.2 支付宝沙箱真实对接</h3>
+  <table>
+    <tr><th style="width:34%">能力</th><th>实现</th></tr>
+    <tr><td>下单</td><td>alipay.trade.wap.pay / precreate（二维码），RSA2 签名，沙箱网关 openapi-sandbox.dl.alipaydev.com</td></tr>
+    <tr><td>对账</td><td>alipay.trade.query 主动查询：TRADE_SUCCESS 即触发 markPaid（应对回调不可达）</td></tr>
+    <tr><td>验签</td><td>/api/alipay/notify 异步通知 rsaCheckV2 验签全实现</td></tr>
+    <tr><td>配置</td><td>alipay.properties 独立配置 appId / 应用私钥 / 支付宝公钥，@PropertySource 注入</td></tr>
+  </table>
+  <h3>10.3 设计价值</h3>
+  <ul>
+    <li><b>策略模式</b>：新增渠道（如云闪付）只需新增一个 Service 实现 + 一个分支，状态机零改动；</li>
+    <li><b>降级能力</b>：真实通道网络不可用时自动降级模拟通道，答辩演示永不翻车；</li>
+    <li><b>安全边界</b>：金额、订单状态全部以服务端为准，前端仅传意图不传金额。</li>
+  </ul>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>12</span></div>
+</section>
+
+<!-- ============ 第 13 页 AI 四引擎故障转移 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>11 核心创新</span></div>
+  <h2 class="pt">11. AI 四引擎故障转移</h2>
+  <div class="pt-sub">DeepSeek → 通义千问 → 豆包 → 本地规则 · 服务永不中断</div>
+  <div class="arch">
+    <div class="layer"><b>① DeepSeek 主力</b><span>deepseek-chat · 质量最优 · 10s 超时 → 失败降级</span></div>
+    <div class="arrow">▼ 超时/异常</div>
+    <div class="layer"><b>② 通义千问</b><span>qwen-turbo（比 plus 快 4 倍）· 8s 超时 → 失败降级</span></div>
+    <div class="arrow">▼ 超时/异常</div>
+    <div class="layer"><b>③ 豆包 AI</b><span>火山方舟 ep 接入 · 15s 超时 → 失败降级</span></div>
+    <div class="arrow">▼ 全部失败</div>
+    <div class="layer"><b>④ 本地规则库</b><span>基于 MySQL 真实景点数据规则化生成 · 零外部依赖 · 永不失败</span></div>
+  </div>
+  <h3>11.1 引擎抽象</h3>
+  <pre>public interface LlmClient {          // 统一引擎契约
+    LlmResult chat(String system, String user, int timeoutMs);
+}
+// LlmDispatcher：按配置顺序逐引擎尝试，捕获超时/HTTP错误/解析失败，
+// 前端徽章展示真实引擎名（⚡DeepSeek / ⚡通义 / ⚡豆包 / 📚本地知识库）</pre>
+  <h3>11.2 实测性能（qwen-turbo）</h3>
+  <table>
+    <tr><th>场景</th><th>耗时</th><th>说明</th></tr>
+    <tr><td>对话问答</td><td>0.9s</td><td>轻量问答走 turbo，速度优先</td></tr>
+    <tr><td>景点讲解（约400字）</td><td>3.9s</td><td>qwen-plus 同任务 15.7s 超时，实测驱动选型</td></tr>
+    <tr><td>5 日路线规划</td><td>3.9~10s</td><td>DeepSeek 质量最高，通义速度最快</td></tr>
+  </table>
+  <div class="callout">答辩演示点：现场断网 → AI 徽章自动切到「📚 本地知识库」→ 服务照常可用，故障转移看得见。</div>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>13</span></div>
+</section>
+
+<!-- ============ 第 14 页 RAG + AOP ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>12 核心创新</span></div>
+  <h2 class="pt">12. RAG 数据约束 与 AOP 零侵入审计</h2>
+  <div class="pt-sub">让 AI 只说真话 · 让审计零侵入</div>
+  <h3>12.1 RAG 数据约束（防幻觉）</h3>
+  <p>AI 幻觉是旅游类应用最大风险——编造不存在的景点会直接毁掉可信度。本项目的解法：</p>
+  <ul>
+    <li><b>召回</b>：按用户问题/规划条件，从 MySQL 219 个真实景点中检索候选集；</li>
+    <li><b>注入</b>：候选集结构化注入 System Prompt，并施加硬约束——"只能从候选列表选择，禁止编造"；</li>
+    <li><b>校验</b>：AI 输出中的景点名回库校验，不在库内的条目剔除并降级重试；</li>
+    <li><b>兜底</b>：全部失败时返回本地规则结果，前端徽章如实标注来源引擎。</li>
+  </ul>
+  <div class="callout">效果：AI 讲解、智能规划、一句话游记的全部内容都可回溯到数据库真实景点——「数据是真的」贯穿全项目。</div>
+  <h3>12.2 AOP 零侵入审计日志</h3>
+  <pre>@Aspect @Component
+public class AuditLogAspect {
+    @Around("execution(* cn.edu.qut.controller.admin..*(..)) " +
+            "&amp;&amp; (@annotation(org.springframework.web.bind.annotation.PostMapping)" +
+            " || @annotation(...PutMapping) || @annotation(...DeleteMapping))")
+    public Object audit(ProceedingJoinPoint pjp) throws Throwable {
+        // 自动记录：管理员ID / 操作类型 / 目标对象 / 参数摘要 / 时间
+        // Controller 代码零改动 —— 横切关注点与业务彻底解耦
+    }
+}</pre>
+  <ul>
+    <li><b>零侵入</b>：管理端所有写操作（增删改）自动入审计表，业务代码无感知；</li>
+    <li><b>可扩展</b>：告警、限流等横切能力可按同模式叠加，体现 AOP 工程价值。</li>
+  </ul>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>14</span></div>
+</section>
+
+<!-- ============ 第 15 页 双视图 + 地图 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>13 架构创新</span></div>
+  <h2 class="pt">13. 双视图渲染 与 Leaflet 地图可视化</h2>
+  <div class="pt-sub">一套 Service 两种输出 · 219 个真实坐标一图尽览</div>
+  <h3>13.1 双视图渲染架构</h3>
+  <table>
+    <tr><th style="width:24%">维度</th><th style="width:38%">SPA 视图</th><th>JSP 视图</th></tr>
+    <tr><td>技术</td><td>原生 JS + History 路由 + REST JSON</td><td>JSP + JSTL/EL + 表单绑定</td></tr>
+    <tr><td>Controller</td><td>@RestController（50+ 接口）</td><td>@Controller（/page/** 14 页）</td></tr>
+    <tr><td>共享层</td><td colspan="2">完全同一套 Service / DAO / Mapper —— 业务逻辑零复制</td></tr>
+  </table>
+  <div class="callout">架构意义：证明 Spring MVC「同一业务层可同时服务前后端分离与传统服务端渲染」——这正是 Spring MVC 相比纯前后端分离方案的灵活性优势。</div>
+  <h3>13.2 景点地图可视化</h3>
+  <ul>
+    <li><b>数据接口</b>：<code>GET /api/spots/map</code> 返回全量景点坐标（名称/省份/评分/价格/简介/经纬度）；</li>
+    <li><b>渲染</b>：Leaflet 1.9.4 本地化部署（不依赖 CDN，校园网可用），高德瓦片源 + 多源降级；</li>
+    <li><b>交互</b>：219 个 circleMarker 按评分着色，悬停显示景点名称 tooltip，点击弹出详情卡（省份/城市/评分/价格/简介摘要），卡内一键跳转景点详情页；</li>
+    <li><b>工程细节</b>：视口裁剪渲染，219 点全量标注流畅 60fps。</li>
+  </ul>
+  <h3>13.3 界面预览要点</h3>
+  <p>地图页支持缩放平移，与排行榜、省份指南联动——从「全国分布 → 省份聚焦 → 单点详情」三级钻取，形成完整的空间导览动线。</p>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>15</span></div>
+</section>
+
+<!-- ============ 第 16 页 功能创新集锦 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>14 功能创新</span></div>
+  <h2 class="pt">14. 功能创新集锦</h2>
+  <div class="pt-sub">让项目有记忆点的小设计 · 每个都有真实代码支撑</div>
+  <div class="grid2">
+    <div class="card"><h4>🎫 云游盲盒</h4><p><code>ORDER BY RAND() LIMIT 1</code> 随机抽取景点直达详情，一键开启说走就走的旅行。</p></div>
+    <div class="card"><h4>🗺️ 足迹地图</h4><p>打卡过的景点在地图上点亮，累计足迹可视化，激励持续使用。</p></div>
+    <div class="card"><h4>🎵 情怀配乐系统</h4><p>三曲轮播：《国风·云游》（本地 mp3 兜底）+《我和你》《亚洲雄风》（B 站官方嵌入，断网自动降级本地曲），呼应「云游中国」主题；VR 进舱自动配乐、退出自动释放。</p></div>
+    <div class="card"><h4>✍️ AI 一句话游记</h4><p>基于景点真实数据一句话生成游记文案，社交分享属性，RAG 约束不编造。</p></div>
+    <div class="card"><h4>📱 手机适配</h4><p>VR 陀螺仪体感环视、响应式布局、移动端触控优化。</p></div>
+    <div class="card"><h4>🖼️ 图片稳定管线</h4><p>搜索匹配 → MD5 去重 → 压缩缓存 → 失败降级 picsum 稳定源，任何网络不破图。</p></div>
+  </div>
+  <h3>14.1 创新点与课程知识点的对应</h3>
+  <table>
+    <tr><th style="width:34%">创新点</th><th>体现的课程知识点</th></tr>
+    <tr><td>AI 四引擎故障转移</td><td>接口多态 / 策略模式 / 异常处理链</td></tr>
+    <tr><td>事务状态机 + 双通道支付</td><td>@Transactional / SQL 条件更新 / 幂等设计</td></tr>
+    <tr><td>AOP 审计</td><td>Spring AOP 切面 / 环绕通知 / 横切解耦</td></tr>
+    <tr><td>双视图渲染</td><td>Spring MVC 双输出模式 / JSTL/EL / REST</td></tr>
+    <tr><td>动态 SQL 查询</td><td>MyBatis &lt;script&gt; / 预编译防注入 / 分页</td></tr>
+  </table>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>16</span></div>
+</section>
+
+<!-- ============ 第 17 页 API 接口概览 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>15 API 接口</span></div>
+  <h2 class="pt">15. API 接口概览</h2>
+  <div class="pt-sub">50+ REST 接口 · 按域分组 · RESTful 风格</div>
+  <table>
+    <tr><th style="width:20%">接口域</th><th style="width:44%">代表性接口</th><th>说明</th></tr>
+    <tr><td>/api/spots</td><td>GET list / GET {id} / GET /map / GET /search</td><td>景点查询全家族，含地图坐标接口</td></tr>
+    <tr><td>/api/recommend</td><td>GET /hot / /highscore / /preference</td><td>三维推荐策略</td></tr>
+    <tr><td>/api/plan</td><td>POST 生成路线 / GET 历史规划</td><td>AI 规划 + 落库</td></tr>
+    <tr><td>/api/ai</td><td>POST /chat / /journal / /explain</td><td>AI 问答 / 游记 / 讲解，四引擎调度</td></tr>
+    <tr><td>/api/orders</td><td>POST 下单 / POST /{no}/pay / /alipay-query / DELETE</td><td>订单全生命周期 + 主动对账</td></tr>
+    <tr><td>/api/alipay</td><td>GET /return / POST /notify</td><td>沙箱同步回跳 + 异步通知验签</td></tr>
+    <tr><td>/api/vr</td><td>POST /view 打卡 / GET 热度榜</td><td>VR 数据闭环</td></tr>
+    <tr><td>/api/pano</td><td>GET /list / GET /{spotId}</td><td>真全景素材定位（六面贴图）</td></tr>
+    <tr><td>/api/auth / user</td><td>登录注册 / 收藏 / 足迹</td><td>用户域</td></tr>
+    <tr><td>/api/admin</td><td>景点/订单/用户管理（AOP 审计覆盖）</td><td>管理域</td></tr>
+  </table>
+  <h3>15.1 接口规范</h3>
+  <ul>
+    <li><b>统一响应</b>：<code>{code, message, data}</code>，全局异常处理器兜底 500；</li>
+    <li><b>参数绑定</b>：@RequestParam 显式命名 + Maven 编译开启 <code>-parameters</code>，双保险；</li>
+    <li><b>版本防缓存</b>：静态资源带版本参数（index.html?v=日期），迭代即时生效。</li>
+  </ul>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>17</span></div>
+</section>
+
+<!-- ============ 第 18 页 部署与运行 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>16 部署与运行</span></div>
+  <h2 class="pt">16. 部署与运行</h2>
+  <div class="pt-sub">五步启动 · 开箱即用</div>
+  <h3>16.1 环境要求</h3>
+  <table>
+    <tr><th style="width:24%">组件</th><th style="width:26%">版本</th><th>备注</th></tr>
+    <tr><td>JDK</td><td>17+（兼容 25）</td><td>Maven 编译 target 17</td></tr>
+    <tr><td>Maven</td><td>3.9+</td><td>编译需 &lt;parameters&gt;true</td></tr>
+    <tr><td>MySQL</td><td>8.x</td><td>utf8mb4，空库即可（自举建表）</td></tr>
+    <tr><td>Tomcat</td><td>11</td><td>Jakarta Servlet 6；Application context = /</td></tr>
+  </table>
+  <h3>16.2 启动步骤</h3>
+  <pre>① 建库：CREATE DATABASE scenic_db DEFAULT CHARSET utf8mb4;
+② 配置：jdbc.url / username / password（AppConfig）
+③ 编译：mvn clean compile war:exploded -DskipTests
+④ 部署：IDEA Tomcat 11 → untitled8:war exploded → context "/"
+⑤ 启动：AppConfig.databaseBootstrap 自动建表 + 灌种子数据
+   访问 http://localhost:8080/  即可使用</pre>
+  <h3>16.3 AI / 支付配置</h3>
+  <pre>ai.properties      → ai.providers=deepseek,qwen,doubao + 各引擎 key/model/timeout
+alipay.properties  → 沙箱 appId / 应用私钥(PKCS#8) / 支付宝公钥 / 网关地址</pre>
+  <h3>16.4 局域网共享（答辩演示）</h3>
+  <ul>
+    <li>Tomcat 绑定 0.0.0.0:8080，同网段通过 <code>http://&lt;本机IP&gt;:8080/</code> 访问；</li>
+    <li>防火墙放行：<code>netsh advfirewall firewall add rule name="Tomcat 8080" dir=in action=allow protocol=TCP localport=8080</code>；</li>
+    <li>注意 DHCP 动态 IP：分享前用 <code>ipconfig</code> 确认最新 IPv4 地址。</li>
+  </ul>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>18</span></div>
+</section>
+
+<!-- ============ 第 19 页 统计与难点 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>17 项目统计</span></div>
+  <h2 class="pt">17. 项目统计 与 难点攻克</h2>
+  <div class="pt-sub">用数字说话 · 用问题证明深度</div>
+  <h3>17.1 工作量统计</h3>
+  <div class="stat">
+    <div><b>102</b><span>Java 类</span></div>
+    <div><b>7074</b><span>Java 行数</span></div>
+    <div><b>14</b><span>Controller</span></div>
+    <div><b>28</b><span>Service(接口+Impl)</span></div>
+    <div><b>12</b><span>MyBatis Mapper</span></div>
+    <div><b>14</b><span>JSP 页面</span></div>
+  </div>
+  <div class="stat">
+    <div><b>50+</b><span>REST 接口</span></div>
+    <div><b>12</b><span>数据库表</span></div>
+    <div><b>219</b><span>真实景点</span></div>
+    <div><b>335</b><span>用户评论</span></div>
+    <div><b>31</b><span>覆盖省份</span></div>
+    <div><b>16</b><span>主题路线</span></div>
+  </div>
+  <h3>17.2 关键难点与解决</h3>
+  <table>
+    <tr><th style="width:30%">难点</th><th>解决</th></tr>
+    <tr><td>JDK 25 与传统 SSM（javax.*）冲突</td><td>升级 Spring 7 + Jakarta EE 命名空间 + Tomcat 11，完成代际适配</td></tr>
+    <tr><td>AI 幻觉编造景点</td><td>RAG 库内召回 + Prompt 硬约束 + 回库校验三重防线</td></tr>
+    <tr><td>AI 引擎超时/限流/故障</td><td>四引擎故障转移 + 分级超时 + 本地规则兜底</td></tr>
+    <tr><td>校园网无公网，支付回调不可达</td><td>trade.query 主动查询补单 + 模拟通道降级，支付闭环不依赖回调</td></tr>
+    <tr><td>qwen-plus 生成 15.7s 超时</td><td>实测驱动选型 qwen-turbo（0.9~3.9s），讲解类任务主力切换</td></tr>
+    <tr><td>219 点地图渲染性能</td><td>circleMarker 替代图标 + 视口裁剪，稳定 60fps</td></tr>
+  </table>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>19</span></div>
+</section>
+
+<!-- ============ 第 20 页 总结与展望 ============ -->
+<section class="page">
+  <div class="ph"><span><b>云游中国</b> · 完整项目文档</span><span>18 总结与展望</span></div>
+  <h2 class="pt">18. 总结与展望</h2>
+  <div class="pt-sub">技术之外，希望这个项目有点温度</div>
+  <h3>18.1 项目总结</h3>
+  <p>「云游中国」以 SSM 五层架构为骨架，完成了从数据层（12 表 / 219 真实景点）、服务层（事务状态机 / 故障转移 / RAG 约束）、控制层（50+ REST 接口 + 14 JSP 双视图）到交互层（VR 360° 全景 / 地图可视化 / 双通道支付）的完整闭环。八个核心创新点均有真实代码与实测数据支撑，不是概念堆砌。</p>
+  <h3>18.2 收获</h3>
+  <ul>
+    <li><b>架构能力</b>：理解了 IoC/DI/AOP/事务在真实业务中的落位，而非停留在概念；</li>
+    <li><b>工程判断</b>：AI 引擎选型、超时分级、通道降级——每个决策都由实测数据驱动；</li>
+    <li><b>问题闭环</b>：从「发现坑」到「填坑」到「讲清楚为什么这样填」，完成完整训练。</li>
+  </ul>
+  <h3>18.3 展望</h3>
+  <ul>
+    <li>引入 Redis 缓存热点景点与规划结果，进一步提升并发表现；</li>
+    <li>接入更多 VR 全景素材，实现全部 219 景点真 360° 覆盖；</li>
+    <li>支付通道从沙箱升级为正式商户，打通真实资金流。</li>
+  </ul>
+  <div class="callout" style="margin-top:12px;">
+    <b>结语</b> —— 2008 年奥运开幕式上，一首《我和你》把中国讲给世界听；「云游中国」希望用 219 个真实景点、VR 实景与受约束的 AI 讲解，把中国的山河讲给更多人听。数据是真的，全景是真的，歌也是真有故事的。
+  </div>
+  <div style="text-align:center; margin-top:22px; color:#0b7a54;">
+    <div style="font-size:20px; font-weight:800;">谢谢观看 · 恳请各位老师批评指正</div>
+    <div style="font-size:10.5px; color:#6b7280; margin-top:4px;">云游中国 · 全国景点智能导览推荐系统 · SSM 全栈实践</div>
+  </div>
+  <div class="pf"><span>云游中国 · SSM 全栈旅游导览系统</span><span>20</span></div>
+</section>
+
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>云游中国 · 前端资源架构</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Microsoft YaHei", sans-serif; background: #f4f7f6; color: #1f2937; padding: 28px 40px; }
+  h1 { font-size: 26px; color: #0b7a54; margin-bottom: 4px; }
+  .sub { color: #6b7280; font-size: 13px; margin-bottom: 18px; }
+  .wrap { display: flex; gap: 24px; align-items: flex-start; }
+  .tree { flex: 1.4; background: #1e2530; border-radius: 12px; padding: 22px 26px; font-family: Consolas, monospace; font-size: 14px; line-height: 1.95; color: #d8e4da; }
+  .t-cm { color: #7ec9a3; } .t-dir { color: #8ad8ff; font-weight: bold; } .t-hl { color: #f5c34b; font-weight: bold; }
+  .notes { flex: 1; }
+  .note { background: #fff; border-left: 4px solid #0e9f6e; border-radius: 0 8px 8px 0; padding: 12px 16px; margin-bottom: 11px; box-shadow: 0 2px 8px rgba(15,60,45,.06); }
+  .note b { color: #0b7a54; font-size: 14px; display: block; margin-bottom: 3px; }
+  .note p { font-size: 12px; color: #4b5563; line-height: 1.6; }
+</style>
+</head>
+<body>
+<h1>前端资源架构 · webapp/ 全解析</h1>
+<div class="sub">零框架 SPA + 14 JSP 双视图 · 全部资源本地化可降级 —— 弱网环境永可用</div>
+<div class="wrap">
+<div class="tree">
+src/main/webapp/
+├── index.html <span class="t-hl">★</span> <span class="t-cm">SPA 壳：12 板块导航 + 版本号防缓存</span>
+├── admin.html <span class="t-cm">管理端单页（AOP 审计作用域）</span>
+├── <span class="t-dir">WEB-INF/views/</span> <span class="t-cm">14 个 JSP（JSTL + EL 服务端渲染）</span>
+│   ├── home.jsp · ranking.jsp · stats.jsp
+│   ├── provinceGuide.jsp · favorites.jsp · about.jsp
+│   └── orders.jsp · spotDetail.jsp …
+└── <span class="t-dir">static/</span>
+    ├── <span class="t-dir">js/</span>
+    │   ├── app.js <span class="t-hl">★</span> <span class="t-cm">约 2100 行：路由/渲染/VR/支付/地图</span>
+    │   └── qrcode.min.js <span class="t-cm">二维码库（本地化）</span>
+    ├── <span class="t-dir">css/</span>
+    │   └── app.css <span class="t-cm">全站样式：票根卡/VR 沉浸/玻璃拟态</span>
+    ├── <span class="t-dir">lib/leaflet/</span> <span class="t-cm">Leaflet 1.9.4 本地化（不依赖 CDN）</span>
+    ├── <span class="t-dir">pano/</span> <span class="t-cm">5 景点 × 六面 3100×3100 实拍贴图</span>
+    │   ├── great-wall/ _f _r _b _l _u _d .jpg
+    │   ├── guilin/ huangshan/ zhangjiajie/ jiuzhaigou/
+    ├── <span class="t-dir">audio/</span> <span class="t-cm">国风 mp3 本地兜底（B 站曲断网降级）</span>
+    └── <span class="t-dir">img/</span> <span class="t-cm">景点图片缓存（搜索→匹配→去重→压缩）</span>
+</div>
+<div class="notes">
+  <div class="note"><b>app.js 五大引擎</b><p>① History 路由器 ② 渲染器（12 板块）③ VR 三模式引擎（sphere/pano/cube）④ 支付弹窗（三通道+轮询对账）⑤ Leaflet 地图页 —— 模块化函数分区，2,104 行。</p></div>
+  <div class="note"><b>VR 素材管线</b><p>AirPano 实拍六面贴图，每面 3100×3100；缺贴图景点自动降级柱面环景/3D 图墙，功能永不破。</p></div>
+  <div class="note"><b>本地化哲学</b><p>Leaflet、qrcode、字体、音频全部本地化；AI 曲目走 B 站官方嵌入 + 本地 mp3 兜底 —— 外部依赖全部有 Plan B。</p></div>
+  <div class="note"><b>缓存治理</b><p>静态资源带版本参数（?v=20261001a）强刷浏览器缓存；图片 MD5 去重 + 服务端压缩，弱网加载快。</p></div>
+</div>
+</div>
+</body>
+</html>

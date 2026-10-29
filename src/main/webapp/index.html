@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>云游中国 · 全国景点智能导览推荐 · 虚拟游览 · AI 助教</title>
+  <link rel="stylesheet" href="static/css/app.css?v=20261001b" />
+  <!-- Leaflet 交互式地图 (本地化, 高德瓦片源国内可访问) -->
+  <link rel="stylesheet" href="static/lib/leaflet/leaflet.css?v=20261001b" />
+  <script src="static/lib/leaflet/leaflet.js?v=20261001b"></script>
+</head>
+<body>
+  <!-- 顶部导航 -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand" data-tab="home">
+        <span class="brand-logo">🇨🇳</span>
+        <div>
+          <div class="brand-name">云游中国</div>
+          <div class="brand-sub">全国景点 · 智能导览 · 虚拟游览 · AI 讲解</div>
+        </div>
+      </div>
+      <nav class="nav" id="nav">
+        <a class="nav-item active" data-tab="home">首页</a>
+        <a class="nav-item" data-tab="explore">景点导览</a>
+        <a class="nav-item" data-tab="planner">🧭 智能规划</a>
+        <a class="nav-item" data-tab="recommend">智能推荐</a>
+        <a class="nav-item" data-tab="tour">虚拟游览</a>
+        <a class="nav-item" data-tab="map">🗺 景点地图</a>
+        <a class="nav-item" data-tab="orders">🧾 我的订单</a>
+        <a class="nav-item" data-tab="ai">AI 助教</a>
+        <a class="nav-item" data-tab="me">我的</a>
+      </nav>
+      <div id="userArea" class="user-area"></div>
+    </div>
+  </header>
+
+  <main id="app" class="page"></main>
+
+  <!-- 景点详情弹窗 -->
+  <div class="modal-mask" id="spotModal" hidden>
+    <div class="modal modal-wide">
+      <button class="modal-close" id="spotModalClose">×</button>
+      <div id="spotModalBody"></div>
+    </div>
+  </div>
+
+  <!-- 全局提示 -->
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- 背景音乐: 默认静音, 由用户点击喇叭手动开启。循环播放《国风·云游》(12134.com 免费商用本地 mp3), 由 app.js 动态创建迷你播放器 -->
+  <button id="bgmToggle" class="bgm-toggle" type="button" title="背景音乐（默认关闭）· 国风·云游" aria-label="背景音乐开关">🔈</button>
+
+  <!-- 悬浮 AI 按钮 -->
+  <button id="floatAi" class="float-ai" title="AI 助教">🤖<span>问 AI</span></button>
+
+  <!-- 云游盲盒: 随机抽一个景点直接前往 -->
+  <button id="blindBox" class="blind-box" type="button" title="云游盲盒: 随机抽一个景点前往">🎲<span>盲盒</span></button>
+
+  <script src="static/js/api.js?v=20261001b"></script>
+  <script src="static/js/qrcode.min.js?v=20261001b"></script>
+  <script src="static/js/app.js?v=20261009a"></script>
+</body>
+</html>
