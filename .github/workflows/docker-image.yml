@@ -44,3 +44,49 @@ jobs:
           context: .
           push: true
           tags: ${{ env.IMAGE }}:latest
+
+  smoke:
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root123
+          MYSQL_DATABASE: scenic_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot123"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    steps:
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Run app container against MySQL
+        run: |
+          docker run -d --name app -p 8080:8080 \
+            --add-host host.docker.internal:host-gateway \
+            -e DB_HOST=host.docker.internal -e DB_PORT=3306 \
+            -e DB_NAME=scenic_db -e DB_USER=root -e DB_PASSWORD=root123 \
+            ${{ env.IMAGE }}:latest
+
+      - name: Wait for startup
+        run: |
+          for i in $(seq 1 40); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/ || true)
+            echo "attempt $i -> HTTP $code"
+            if [ "$code" = "200" ]; then break; fi
+            sleep 5
+          done
+
+      - name: Check endpoints
+        run: |
+          echo "=== / ===";              curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/
+          echo "=== /static/index.html ==="; curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/static/index.html
+          echo "=== /api/spots ===";     curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:8080/api/spots?page=1&size=3"
+          echo "=== /page/home ===";     curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/page/home
+
+      - name: Dump container logs
+        if: always()
+        run: docker logs app 2>&1 | tail -150
