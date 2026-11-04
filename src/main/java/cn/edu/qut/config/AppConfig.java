@@ -35,8 +35,20 @@ import java.sql.ResultSet;
 @EnableAspectJAutoProxy
 @MapperScan("cn.edu.qut.mapper")
 @ComponentScan(basePackages = {"cn.edu.qut.service", "cn.edu.qut.support", "cn.edu.qut.dao", "cn.edu.qut.aop", "cn.edu.qut.pay"})
-@PropertySource("classpath:alipay.properties")
+@PropertySource(value = "classpath:alipay.properties", ignoreResourceNotFound = true)
 public class AppConfig {
+
+    // ========== 数据库连接 (环境变量优先, 未设置时回退本机默认值) ==========
+    @Value("${DB_HOST:localhost}")
+    public String dbHost;
+    @Value("${DB_PORT:3306}")
+    public int dbPort;
+    @Value("${DB_NAME:scenic_db}")
+    public String dbName;
+    @Value("${DB_USER:scenic}")
+    public String dbUser;
+    @Value("${DB_PASSWORD:scenic123}")
+    public String dbPassword;
 
     // ========== 支付宝沙箱配置 (从 alipay.properties 读取) ==========
     @Value("${alipay.appId:}")
@@ -62,10 +74,11 @@ public class AppConfig {
     public DataSource dataSource() {
         DruidDataSource ds = new DruidDataSource();
         ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        ds.setUrl("jdbc:mysql://localhost:3306/scenic_db?useUnicode=true&characterEncoding=UTF-8"
+        ds.setUrl("jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName
+                + "?useUnicode=true&characterEncoding=UTF-8"
                 + "&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true");
-        ds.setUsername("scenic");
-        ds.setPassword("scenic123");
+        ds.setUsername(dbUser);
+        ds.setPassword(dbPassword);
         ds.setInitialSize(2);
         ds.setMinIdle(2);
         ds.setMaxActive(16);
