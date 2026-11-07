@@ -91,6 +91,7 @@ public class AppConfig {
 
     /**
      * 幂等播种: 仅在空库时执行建表与全国景点数据脚本。
+     * 数据库暂时不可用时只记录错误, 不阻断应用启动(否则整个 WAR 部署失败, 表现为全站 404)。
      */
     @Bean
     public InitializingBean databaseBootstrap(DataSource dataSource) {
@@ -112,6 +113,10 @@ public class AppConfig {
                 if (empty) {
                     executeScript(conn, "data.sql");
                 }
+            } catch (Exception e) {
+                org.slf4j.LoggerFactory.getLogger(AppConfig.class).error(
+                        "数据库初始化失败(应用仍将启动, 请检查 DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD): {}",
+                        e.getMessage(), e);
             }
         };
     }
