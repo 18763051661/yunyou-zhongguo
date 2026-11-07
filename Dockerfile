@@ -3,6 +3,7 @@
 FROM tomcat:11.0-jdk17-temurin
 
 ENV TZ=Asia/Shanghai \
+    PORT=8080 \
     DB_HOST=localhost \
     DB_PORT=3306 \
     DB_NAME=scenic_db \
@@ -16,4 +17,5 @@ COPY target/untitled8.war /usr/local/tomcat/webapps/ROOT.war
 
 EXPOSE 8080
 
-CMD ["catalina.sh", "run"]
+# 端口可通过 PORT 环境变量覆盖(部分云平台限制 8080)
+CMD sed -i "s/port=\"8080\"/port=\"${PORT:-8080}\"/" $CATALINA_HOME/conf/server.xml && exec catalina.sh run
