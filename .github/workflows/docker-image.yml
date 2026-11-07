@@ -43,7 +43,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.IMAGE }}:latest
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.run_number }}
 
   smoke:
     needs: build
@@ -86,6 +88,22 @@ jobs:
           echo "=== /static/index.html ==="; curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/static/index.html
           echo "=== /api/spots ===";     curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:8080/api/spots?page=1&size=3"
           echo "=== /page/home ===";     curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/page/home
+
+      - name: Verify PORT override (3000)
+        run: |
+          docker run -d --name app3000 -p 3000:3000 \
+            --add-host host.docker.internal:host-gateway \
+            -e PORT=3000 \
+            -e DB_HOST=host.docker.internal -e DB_PORT=3306 \
+            -e DB_NAME=scenic_db -e DB_USER=root -e DB_PASSWORD=root123 \
+            ${{ env.IMAGE }}:${{ github.run_number }}
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/ || true)
+            echo "port3000 attempt $i -> HTTP $code"
+            if [ "$code" = "200" ]; then break; fi
+            sleep 5
+          done
+          test "$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/)" = "200"
 
       - name: Dump container logs
         if: always()
