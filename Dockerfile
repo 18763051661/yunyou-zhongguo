@@ -9,7 +9,7 @@ ENV TZ=Asia/Shanghai \
     DB_NAME=scenic_db \
     DB_USER=scenic \
     DB_PASSWORD=scenic123 \
-    JAVA_OPTS="-XX:MaxRAMPercentage=70.0 -Dfile.encoding=UTF-8"
+    JAVA_OPTS="-XX:MaxRAMPercentage=70.0 -XX:MaxMetaspaceSize=256m -Dfile.encoding=UTF-8"
 
 # 官方镜像自带示例应用, 清空后只保留本项目
 RUN rm -rf /usr/local/tomcat/webapps/*
