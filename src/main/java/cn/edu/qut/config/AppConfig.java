@@ -70,19 +70,27 @@ public class AppConfig {
     @Value("${alipay.notifyUrl:}")
     public String alipayNotifyUrl;
 
-    @Bean(initMethod = "init", destroyMethod = "close")
+    /**
+     * 注意: 这里刻意不加 initMethod="init" 且 initialSize=0。
+     * Druid 在 init 时若 initialSize>0 会立刻建连, 云端数据库未就绪时会抛异常,
+     * 导致 Spring 上下文启动失败 —— 表现为整站 404。改为首次访问时惰性建连。
+     */
+    @Bean(destroyMethod = "close")
     public DataSource dataSource() {
         DruidDataSource ds = new DruidDataSource();
         ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
         ds.setUrl("jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName
                 + "?useUnicode=true&characterEncoding=UTF-8"
-                + "&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true");
+                + "&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true"
+                + "&connectTimeout=5000&socketTimeout=15000");
         ds.setUsername(dbUser);
         ds.setPassword(dbPassword);
-        ds.setInitialSize(2);
-        ds.setMinIdle(2);
+        ds.setInitialSize(0);
+        ds.setMinIdle(0);
         ds.setMaxActive(16);
-        ds.setMaxWait(10000);
+        ds.setMaxWait(5000);
+        ds.setBreakAfterAcquireFailure(false);
+        ds.setConnectionErrorRetryAttempts(1);
         ds.setValidationQuery("select 1");
         ds.setTestWhileIdle(true);
         ds.setTimeBetweenEvictionRunsMillis(60000);
@@ -91,33 +99,37 @@ public class AppConfig {
 
     /**
      * 幂等播种: 仅在空库时执行建表与全国景点数据脚本。
-     * 数据库暂时不可用时只记录错误, 不阻断应用启动(否则整个 WAR 部署失败, 表现为全站 404)。
+     * 放到后台线程执行, 数据库未就绪也不会拖慢/阻断启动(云端慢库常导致健康检查超时被杀)。
      */
     @Bean
     public InitializingBean databaseBootstrap(DataSource dataSource) {
         return () -> {
-            try (Connection conn = dataSource.getConnection()) {
-                // schema.sql 每次都执行 (全部用 CREATE TABLE IF NOT EXISTS, 幂等安全)
-                executeScript(conn, "schema.sql");
-                // data.sql 仅在 scenic_spot 为空时执行
-                boolean empty = true;
-                try (ResultSet rs = conn.getMetaData().getTables(conn.getCatalog(), null, "scenic_spot", null)) {
-                    if (rs.next()) {
-                        try (PreparedStatement ps = conn.prepareStatement("select count(*) from scenic_spot");
-                             ResultSet crs = ps.executeQuery()) {
-                            crs.next();
-                            empty = crs.getLong(1) == 0;
+            Thread worker = new Thread(() -> {
+                try (Connection conn = dataSource.getConnection()) {
+                    // schema.sql 每次都执行 (全部用 CREATE TABLE IF NOT EXISTS, 幂等安全)
+                    executeScript(conn, "schema.sql");
+                    // data.sql 仅在 scenic_spot 为空时执行
+                    boolean empty = true;
+                    try (ResultSet rs = conn.getMetaData().getTables(conn.getCatalog(), null, "scenic_spot", null)) {
+                        if (rs.next()) {
+                            try (PreparedStatement ps = conn.prepareStatement("select count(*) from scenic_spot");
+                                 ResultSet crs = ps.executeQuery()) {
+                                crs.next();
+                                empty = crs.getLong(1) == 0;
+                            }
                         }
                     }
+                    if (empty) {
+                        executeScript(conn, "data.sql");
+                    }
+                } catch (Exception e) {
+                    org.slf4j.LoggerFactory.getLogger(AppConfig.class).error(
+                            "数据库初始化失败(应用仍将启动, 请检查 DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD): {}",
+                            e.getMessage(), e);
                 }
-                if (empty) {
-                    executeScript(conn, "data.sql");
-                }
-            } catch (Exception e) {
-                org.slf4j.LoggerFactory.getLogger(AppConfig.class).error(
-                        "数据库初始化失败(应用仍将启动, 请检查 DB_HOST/DB_PORT/DB_NAME/DB_USER/DB_PASSWORD): {}",
-                        e.getMessage(), e);
-            }
+            }, "db-bootstrap");
+            worker.setDaemon(true);
+            worker.start();
         };
     }
 
