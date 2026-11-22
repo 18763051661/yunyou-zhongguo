@@ -8,14 +8,19 @@ ENV TZ=Asia/Shanghai \
     DB_PORT=3306 \
     DB_NAME=scenic_db \
     DB_USER=scenic \
-    DB_PASSWORD=scenic123
+    DB_PASSWORD=scenic123 \
+    JAVA_OPTS="-XX:MaxRAMPercentage=70.0 -Dfile.encoding=UTF-8"
 
 # 官方镜像自带示例应用, 清空后只保留本项目
 RUN rm -rf /usr/local/tomcat/webapps/*
 
 COPY target/untitled8.war /usr/local/tomcat/webapps/ROOT.war
 
-EXPOSE 8080
+# 启动脚本: 同时监听 PORT(默认 8080) 与另一个常用端口, 兼容云平台端口配置差异
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh \
+ && chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# 端口可通过 PORT 环境变量覆盖(部分云平台限制 8080)
-CMD sed -i "s/port=\"8080\"/port=\"${PORT:-8080}\"/" $CATALINA_HOME/conf/server.xml && exec catalina.sh run
+EXPOSE 8080 3000
+
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
