@@ -322,6 +322,302 @@ img { display: block; max-width: 100%; }
 .ai-side li { padding: 7px 0; border-bottom: 1px dashed var(--line); cursor: pointer; }
 .ai-side li:hover { color: var(--primary); }
 
+/* ================= 小云: 蓝色整身兔子 ================= */
+.xy-stage { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  height: 200px; padding-bottom: 4px; user-select: none; }
+.xiaoyun { position: relative; width: 120px; height: 170px; cursor: pointer; transition: transform .2s; }
+.xiaoyun:hover { transform: translateY(-2px); }
+.xy-shadow { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 70px; height: 10px; background: rgba(0,0,0,.15); border-radius: 50%;
+  animation: xy-shadow 2.4s ease-in-out infinite; }
+.xy-body { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 120px; height: 170px; animation: xy-breathe 2.4s ease-in-out infinite; }
+
+/* 长耳朵 */
+.xy-hat { position: absolute; top: -42px; left: 50%; transform: translateX(-50%); width: 0; height: 0; }
+.xy-hat::before, .xy-hat::after { content: ''; position: absolute; top: 0; width: 24px; height: 56px;
+  background: #3b82f6; border: 2px solid #1d4ed8; border-radius: 50% 50% 42% 42%; }
+.xy-hat::before { left: -26px; transform: rotate(-10deg); transform-origin: bottom center;
+  box-shadow: inset 5px 8px 0 #93c5fd; }
+.xy-hat::after { left: 2px; transform: rotate(10deg); transform-origin: bottom center;
+  box-shadow: inset -5px 8px 0 #93c5fd; }
+
+/* 头 */
+.xy-head { position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  width: 80px; height: 74px; background: #3b82f6; border-radius: 50%;
+  border: 2px solid #1d4ed8; box-shadow: inset 0 -10px 12px rgba(29,78,216,.25); }
+/* 鼻子 */
+.xy-head::before { content: ''; position: absolute; top: 36px; left: 50%; transform: translateX(-50%);
+  width: 11px; height: 8px; background: #1e293b; border-radius: 50%;
+  clip-path: polygon(50% 100%, 0 0, 100% 0); }
+
+/* 眼睛 */
+.xy-eye { position: absolute; top: 22px; width: 15px; height: 17px; background: #1e293b; border-radius: 50%;
+  animation: xy-blink 4s infinite; }
+.xy-eye.left { left: 16px; }
+.xy-eye.right { right: 16px; }
+.xy-eye::after { content: ''; position: absolute; top: 3px; left: 3px; width: 6px; height: 6px; background: #fff; border-radius: 50%; }
+.xy-eye::before { content: ''; position: absolute; bottom: 2px; right: 3px; width: 3px; height: 3px; background: #fff; border-radius: 50%; }
+
+/* 腮红(淡色) */
+.xy-cheek { position: absolute; top: 42px; width: 11px; height: 7px; background: #60a5fa; border-radius: 50%; opacity: .6; }
+.xy-cheek.left { left: 6px; }
+.xy-cheek.right { right: 6px; }
+
+/* 嘴 + 门牙 */
+.xy-mouth { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  width: 18px; height: 10px; border-bottom: 2.5px solid #1e293b; border-radius: 0 0 18px 18px; }
+.xy-mouth::before, .xy-mouth::after { content: ''; position: absolute; top: -2px; width: 5px; height: 6px;
+  background: #fff; border: 1px solid #1d4ed8; border-radius: 0 0 3px 3px; }
+.xy-mouth::before { left: 1px; }
+.xy-mouth::after { right: 1px; }
+
+/* 身体: 整身蓝色圆肚 */
+.xy-head::after { content: ''; position: absolute; top: 62px; left: 50%; transform: translateX(-50%);
+  width: 70px; height: 64px; background: #3b82f6; border: 2px solid #1d4ed8; border-radius: 50% 50% 46% 46%;
+  box-shadow: inset 0 -10px 14px rgba(29,78,216,.3); z-index: -1; }
+
+/* 爪子 */
+.xy-arm { position: absolute; top: 92px; width: 20px; height: 28px; background: #3b82f6; border: 2px solid #1d4ed8; border-radius: 50%; z-index: 1; }
+.xy-arm.left { left: 10px; transform: rotate(20deg); transform-origin: top center; }
+.xy-arm.right { right: 10px; transform: rotate(-20deg); transform-origin: top center; }
+
+/* 气泡 */
+.xy-bubble { position: absolute; top: -8px; left: 50%; transform: translateX(-50%) translateY(-100%);
+  background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 6px 12px;
+  font-size: 12px; color: var(--ink-2); white-space: nowrap; box-shadow: var(--shadow); opacity: 0;
+  transition: opacity .25s; pointer-events: none; }
+.xy-bubble::after { content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+  border: 6px solid transparent; border-top-color: #fff; }
+.xy-bubble.show { opacity: 1; }
+
+/* ---- 状态动画 ---- */
+@keyframes xy-breathe { 0%,100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.04,1.02); } }
+@keyframes xy-shadow { 0%,100% { transform: translateX(-50%) scale(1); opacity: .15; } 50% { transform: translateX(-50%) scale(.85); opacity: .08; } }
+@keyframes xy-blink { 0%,92%,100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+
+/* 耳朵轻摆 */
+.xy-hat::before { animation: xy-ear-l 3s ease-in-out infinite; }
+.xy-hat::after { animation: xy-ear-r 3s ease-in-out infinite; }
+@keyframes xy-ear-l { 0%,100% { transform: rotate(-10deg); } 50% { transform: rotate(-15deg); } }
+@keyframes xy-ear-r { 0%,100% { transform: rotate(10deg); } 50% { transform: rotate(15deg); } }
+
+/* 思考 */
+.xiaoyun.thinking .xy-head { animation: xy-think-head 1.6s ease-in-out infinite; }
+.xiaoyun.thinking .xy-eye { background: transparent; border-top: 3px solid #1e293b; border-radius: 50% 50% 0 0; height: 6px; animation: none; }
+.xiaoyun.thinking .xy-eye::after, .xiaoyun.thinking .xy-eye::before { display: none; }
+.xiaoyun.thinking .xy-mouth { width: 8px; height: 8px; border: 2px solid #1e293b; border-radius: 50%; border-bottom-color: transparent; }
+.xiaoyun.thinking .xy-mouth::before, .xiaoyun.thinking .xy-mouth::after { display: none; }
+@keyframes xy-think-head { 0%,100% { transform: translateX(-50%) rotate(-5deg); } 50% { transform: translateX(-50%) rotate(5deg); } }
+
+/* 说话 */
+.xiaoyun.speaking .xy-mouth { animation: xy-talk .35s ease-in-out infinite; }
+.xiaoyun.speaking .xy-body { animation: xy-talk-body .7s ease-in-out infinite; }
+@keyframes xy-talk { 0%,100% { height: 10px; } 50% { height: 16px; border-bottom-width: 3px; } }
+@keyframes xy-talk-body { 0%,100% { transform: translateX(-50%) rotate(0); } 50% { transform: translateX(-50%) rotate(1.5deg); } }
+
+/* 开心 */
+.xiaoyun.happy .xy-body { animation: xy-jump .6s ease-out; }
+.xiaoyun.happy .xy-eye { height: 6px; border-radius: 0 0 10px 10px; border-bottom: 3px solid #1e293b; background: transparent; animation: none; }
+.xiaoyun.happy .xy-eye::after, .xiaoyun.happy .xy-eye::before { display: none; }
+.xiaoyun.happy .xy-mouth { height: 14px; border-radius: 0 0 20px 20px; }
+@keyframes xy-jump { 0% { transform: translateX(-50%) translateY(0); } 40% { transform: translateX(-50%) translateY(-18px); } 100% { transform: translateX(-50%) translateY(0); } }
+
+/* 挥手 */
+.xiaoyun.wave .xy-arm.right { animation: xy-wave .8s ease-in-out 3; }
+@keyframes xy-wave { 0%,100% { transform: rotate(-20deg); } 50% { transform: rotate(-75deg) translateY(-4px); } }
+
+/* 难过 */
+.xiaoyun.sad .xy-body { animation: xy-sad 1s ease-in-out; }
+.xiaoyun.sad .xy-eye { height: 6px; border-top: 3px solid #1e293b; border-radius: 50% 50% 0 0; background: transparent; animation: none; }
+.xiaoyun.sad .xy-eye::after, .xiaoyun.sad .xy-eye::before { display: none; }
+.xiaoyun.sad .xy-eye.left::after { display: block; content: ''; position: absolute; top: 8px; left: 4px; width: 4px; height: 7px;
+  background: #7dd3fc; border-radius: 0 0 4px 4px; animation: xy-tear 1s ease-in-out infinite; }
+.xiaoyun.sad .xy-mouth { width: 14px; height: 6px; border: 0; border-top: 2.5px solid #1e293b; border-radius: 16px 16px 0 0; }
+.xiaoyun.sad .xy-mouth::before, .xiaoyun.sad .xy-mouth::after { display: none; }
+@keyframes xy-tear { 0%,100% { transform: translateY(0); opacity: 1; } 50% { transform: translateY(8px); opacity: .4; } }
+@keyframes xy-sad { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(3px) rotate(-2deg); } }
+
+/* ---- 模型切换器 ---- */
+.model-switch { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.model-switch .lbl { font-size: 12px; color: var(--ink-3); margin-right: 2px; }
+.model-chip { font-size: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink-2);
+  border-radius: 999px; padding: 4px 12px; cursor: pointer; transition: all .15s; }
+.model-chip:hover { border-color: var(--primary); color: var(--primary); }
+.model-chip.on { background: var(--primary); color: #fff; border-color: var(--primary); }
+.model-chip.auto.on { background: linear-gradient(135deg,var(--primary),#34d399); }
+.engine-tag { font-size: 11px; color: var(--ink-3); margin-left: auto; }
+
+/* ---- 趣味玩法按钮 ---- */
+.fun-row { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 20px 0; }
+.fun-btn { font-size: 12px; border: 1px solid var(--line); background: #fff; color: var(--ink-2);
+  border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+.fun-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ================= 极速景点大挑战 ================= */
+.quiz-mask { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center;
+  z-index: 9999; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.quiz-mask.show { opacity: 1; pointer-events: auto; }
+.quiz-card { width: 460px; max-width: 92vw; background: #fff; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  overflow: hidden; animation: quiz-pop .3s ease; }
+@keyframes quiz-pop { from { transform: scale(.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.quiz-head { display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: linear-gradient(135deg,var(--primary),#34d399); color: #fff; }
+.quiz-title { font-weight: 700; font-size: 16px; }
+.quiz-score { margin-left: auto; font-size: 13px; }
+.quiz-score b { font-size: 18px; }
+.quiz-best { font-size: 12px; opacity: .9; margin-left: 6px; }
+.quiz-best b { font-weight: 700; }
+.quiz-close { background: rgba(255,255,255,.2); border: 0; color: #fff; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 16px; }
+.quiz-body { padding: 24px; }
+.quiz-progress { font-size: 13px; color: var(--ink-3); display: flex; align-items: center; gap: 8px; }
+.quiz-combo { color: #f59e0b; font-weight: 700; animation: quiz-combo-pop .3s ease; }
+@keyframes quiz-combo-pop { from { transform: scale(1.4); } to { transform: scale(1); } }
+.quiz-timer { font-size: 28px; font-weight: 800; text-align: center; margin: 6px 0 14px; transition: color .2s; }
+.quiz-q { font-size: 17px; font-weight: 600; line-height: 1.5; margin-bottom: 18px; text-align: center; }
+.quiz-options { display: flex; flex-direction: column; gap: 10px; }
+.quiz-opt { text-align: left; padding: 12px 16px; border: 2px solid var(--line); background: #fff; border-radius: 12px;
+  font-size: 14px; cursor: pointer; transition: all .15s; color: var(--ink); }
+.quiz-opt:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-light); }
+.quiz-opt.right { border-color: #22c55e; background: #dcfce7; color: #166534; }
+.quiz-opt.wrong { border-color: #ef4444; background: #fee2e2; color: #991b1b; }
+.quiz-opt:disabled { cursor: default; }
+.quiz-answer { margin-top: 16px; padding: 12px; background: #f8fbfa; border-radius: 10px; font-size: 13px; color: var(--ink-2); text-align: center; }
+.quiz-result { text-align: center; padding: 10px 0; }
+.quiz-emoji { font-size: 64px; }
+.quiz-title-big { font-size: 26px; font-weight: 800; color: var(--primary); margin: 8px 0; }
+.quiz-final-score { font-size: 20px; color: var(--ink); margin-bottom: 8px; }
+.quiz-tip { font-size: 13px; color: var(--ink-3); margin-bottom: 20px; }
+
+/* ================= 🌌 星际探索 ================= */
+.space-wrap { padding: 24px; min-height: calc(100vh - 120px); }
+.space-header { text-align: center; margin-bottom: 16px; color: #fff; }
+.space-header h2 { font-size: 26px; margin: 0; background: linear-gradient(90deg,#a78bfa,#60a5fa,#34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.space-header p { color: #94a3b8; font-size: 13px; margin: 6px 0 0; }
+
+.space-scene { position: relative; width: 100%; height: 560px; border-radius: 20px; overflow: hidden;
+  background: radial-gradient(ellipse at center, #0f0c29 0%, #0a0a1f 50%, #000 100%); cursor: grab; }
+.space-scene canvas { display: block; width: 100% !important; height: 100% !important; }
+.space-scene:active { cursor: grabbing; }
+
+.sp-reset { margin-top: 10px; padding: 6px 16px; border: 1px solid rgba(167,139,250,.5); background: rgba(15,12,41,.6);
+  color: #a78bfa; border-radius: 999px; cursor: pointer; font-size: 13px; }
+.sp-reset:hover { background: rgba(167,139,250,.2); }
+.sp-toolbar { display: flex; gap: 10px; justify-content: center; margin-top: 8px; }
+.sp-music { padding: 6px 16px; border: 1px solid rgba(52,211,153,.5); background: rgba(15,12,41,.6);
+  color: #34d399; border-radius: 999px; cursor: pointer; font-size: 13px; }
+.sp-music:hover { background: rgba(52,211,153,.2); }
+.sp-music.on { background: rgba(52,211,153,.3); color: #fff; }
+.sp-control-panel { display: flex; gap: 24px; justify-content: center; margin: 14px 0; padding: 12px 20px;
+  background: rgba(15,12,41,.55); border: 1px solid rgba(167,139,250,.25); border-radius: 14px; flex-wrap: wrap; }
+.sp-ctrl { display: flex; align-items: center; gap: 10px; color: #cbd5e1; font-size: 13px; }
+.sp-ctrl label { white-space: nowrap; }
+.sp-ctrl input[type=range] { width: 130px; accent-color: #a78bfa; cursor: pointer; }
+.sp-ctrl span { color: #a78bfa; font-weight: 600; min-width: 38px; }
+.sp-back { margin-top: 12px; padding: 8px 18px; border: 1px solid rgba(52,211,153,.6); background: rgba(52,211,153,.15);
+  color: #34d399; border-radius: 999px; cursor: pointer; font-size: 14px; width: 100%; }
+.sp-back:hover { background: rgba(52,211,153,.3); color: #fff; }
+.sp-hint { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,.4); font-size: 12px; z-index: 30; pointer-events: none; }
+
+/* 星空 */
+.sp-stars { position: absolute; inset: 0; }
+.sp-star { position: absolute; background: #fff; border-radius: 50%; animation: sp-twinkle 3s ease-in-out infinite; }
+@keyframes sp-twinkle { 0%,100% { opacity: .3; } 50% { opacity: 1; } }
+
+/* 星云 */
+.sp-nebula { position: absolute; inset: 0; background:
+  radial-gradient(circle at 20% 30%, rgba(167,139,250,.15), transparent 40%),
+  radial-gradient(circle at 80% 70%, rgba(59,130,246,.15), transparent 40%),
+  radial-gradient(circle at 50% 50%, rgba(52,211,153,.08), transparent 50%); }
+
+/* 流星 */
+.sp-shooter { position: absolute; top: 10%; left: -10%; width: 120px; height: 1.5px;
+  background: linear-gradient(90deg, transparent, #fff); transform: rotate(20deg);
+  animation: sp-shoot 5s linear infinite; }
+@keyframes sp-shoot { 0% { transform: translate(0,0) rotate(20deg); opacity: 0; }
+  10% { opacity: 1; } 100% { transform: translate(120vw,60vh) rotate(20deg); opacity: 0; } }
+
+/* 太阳系容器 - 3D 倾斜由 JS 拖拽控制 */
+.sp-solar { position: absolute; top: 50%; left: 50%;
+  width: 500px; height: 500px; transform-style: preserve-3d; --tilt: 68deg; }
+
+/* 太阳 */
+.sp-sun { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  width: 50px; height: 50px; z-index: 10; }
+.sp-sun-core { position: absolute; inset: 0; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff8a0, #ffb300 40%, #ff6b00 100%);
+  box-shadow: 0 0 40px 15px rgba(255,180,0,.6); animation: sp-sun-pulse 3s ease-in-out infinite; }
+.sp-sun-glow { position: absolute; inset: -30px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,200,0,.3), transparent 70%); animation: sp-sun-pulse 3s ease-in-out infinite; }
+@keyframes sp-sun-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+/* 轨道 */
+.sp-orbit { position: absolute; top: 50%; left: 50%; border: 1px solid rgba(255,255,255,.12);
+  border-radius: 50%; transform: translate(-50%,-50%); }
+.sp-planet-wrap { position: absolute; top: 0; left: 50%; width: 0; height: 0; transform-origin: 0 0; }
+@keyframes sp-orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* 行星 - 反向倾斜抵消轨道面倾角, 保持圆形 */
+.sp-planet { position: absolute; top: 0; left: 0; border-radius: 50%; transform: translate(-50%,-50%) rotateX(calc(var(--tilt) * -1));
+  cursor: pointer; transition: transform .2s; z-index: 5; }
+.sp-planet:hover { transform: translate(-50%,-50%) rotateX(calc(var(--tilt) * -1)) scale(1.4); z-index: 20; }
+.sp-planet.active { animation: sp-planet-pulse .8s ease-in-out infinite; }
+@keyframes sp-planet-pulse { 0%,100% { transform: translate(-50%,-50%) rotateX(calc(var(--tilt) * -1)) scale(1.2); } 50% { transform: translate(-50%,-50%) rotateX(calc(var(--tilt) * -1)) scale(1.6); } }
+
+/* 土星环 */
+.sp-planet.has-ring .sp-ring { position: absolute; top: 50%; left: 50%; width: 220%; height: 220%;
+  transform: translate(-50%,-50%); border: 3px solid rgba(232,213,163,.6); border-radius: 50%;
+  border-left-color: transparent; border-right-color: transparent; }
+
+/* 信息面板 */
+.sp-info { position: absolute; right: 16px; top: 16px; width: 272px; max-height: calc(100% - 32px); overflow-y: auto; z-index: 30; }
+.sp-info::-webkit-scrollbar { width: 5px; }
+.sp-info::-webkit-scrollbar-thumb { background: rgba(167,139,250,.4); border-radius: 3px; }
+.sp-info-tip { color: #94a3b8; font-size: 13px; text-align: right; padding: 10px 14px; background: rgba(15,12,41,.7); border-radius: 12px; }
+.sp-info-card { background: rgba(15,12,41,.85); backdrop-filter: blur(8px); border: 1px solid rgba(167,139,250,.3);
+  border-radius: 14px; padding: 16px; color: #e2e8f0; animation: sp-card-in .3s ease; }
+@keyframes sp-card-in { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+.sp-info-name { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 8px;
+  background: linear-gradient(90deg,#a78bfa,#60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.sp-info-desc { font-size: 13px; line-height: 1.6; color: #cbd5e1; margin-bottom: 12px; }
+.sp-info-meta { display: flex; flex-direction: column; gap: 6px; }
+.sp-info-meta > div { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 10px;
+  background: rgba(255,255,255,.05); border-radius: 8px; }
+.sp-info-meta span { color: #94a3b8; }
+.sp-info-meta b { color: #fff; }
+
+/* 行星导航条 (与 3D 双向联动) */
+.sp-planet-bar { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 10px 0 4px; }
+.sp-pchip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer;
+  background: rgba(15,12,41,.6); color: #cbd5e1; border: 1px solid rgba(167,139,250,.25); border-radius: 999px; transition: .2s; }
+.sp-pchip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.sp-pchip:hover { border-color: rgba(167,139,250,.7); color: #fff; transform: translateY(-1px); }
+.sp-pchip.on { background: rgba(167,139,250,.25); border-color: #a78bfa; color: #fff; box-shadow: 0 0 12px rgba(167,139,250,.45); }
+
+/* 联动按钮 + 景点 */
+.sp-actions { display: flex; gap: 8px; margin-top: 12px; }
+.sp-actions .sp-back { flex: 1; margin-top: 0; }
+.sp-ai { flex: 1; padding: 8px 10px; border: 1px solid rgba(96,165,250,.6); background: rgba(96,165,250,.15);
+  color: #93c5fd; border-radius: 999px; cursor: pointer; font-size: 13px; white-space: nowrap; }
+.sp-ai:hover { background: rgba(96,165,250,.3); color: #fff; }
+.sp-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: middle;
+  box-shadow: 0 0 10px currentColor; -webkit-text-fill-color: initial; }
+.sp-spots-box { margin-top: 12px; border-top: 1px solid rgba(167,139,250,.2); padding-top: 10px; }
+.sp-spots-title { font-size: 12px; color: #a78bfa; margin-bottom: 8px; }
+.sp-spots-loading { font-size: 12px; color: #64748b; }
+.sp-spot { display: block; width: 100%; text-align: left; margin-bottom: 6px; padding: 8px 10px; cursor: pointer;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; transition: .2s; }
+.sp-spot:hover { background: rgba(167,139,250,.15); border-color: rgba(167,139,250,.5); }
+.sp-spot-name { display: block; font-size: 13px; color: #fff; font-weight: 600; }
+.sp-spot-meta { display: block; font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.sp-voice { margin-top: 8px; width: 100%; padding: 7px 10px; border: 1px solid rgba(251,191,36,.6); background: rgba(251,191,36,.12);
+  color: #fbbf24; border-radius: 999px; cursor: pointer; font-size: 13px; }
+.sp-voice:hover { background: rgba(251,191,36,.3); color: #fff; }
+.sp-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; background: radial-gradient(circle at 50% 45%, #0c1228, #04060d 70%); color: #a78bfa; font-size: 13px; z-index: 45; }
+.sp-loading-ring { width: 40px; height: 40px; border: 3px solid rgba(167,139,250,.2); border-top-color: #a78bfa;
+  border-radius: 50%; animation: sp-spin 1s linear infinite; }
+@keyframes sp-spin { to { transform: rotate(360deg); } }
+
 /* ================= 我的 ================= */
 .me-grid { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
 .auth-box { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; }

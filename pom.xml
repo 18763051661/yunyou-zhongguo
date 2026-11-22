@@ -5,7 +5,8 @@
   <artifactId>untitled8</artifactId>
   <packaging>war</packaging>
   <version>1.0-SNAPSHOT</version>
-  <name>untitled8 Maven Webapp</name>
+  <name>云游中国 · 星际探索 — 全国景点智能导览与星际科普平台</name>
+  <description>SSM 全栈项目：全国景点智能导览、AI 多引擎助手、VR 虚拟游览与 Three.js 星际探索</description>
   <url>http://maven.apache.org</url>
 
   <properties>

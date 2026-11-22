@@ -2,6 +2,8 @@ package cn.edu.qut.service;
 
 import cn.edu.qut.vo.ChatReplyVO;
 
+import java.util.List;
+
 /**
  * AI 助教 Service
  */
@@ -15,6 +17,18 @@ public interface AiAssistantService {
      * @return 回复内容(含建议、跳转类型、关联景点/路线 ID、来源标记)
      */
     ChatReplyVO chat(String raw);
+
+    /**
+     * 与 AI 助教对话, 可指定首选大模型供应商。
+     *
+     * @param raw      用户输入
+     * @param provider 首选供应商名称(deepseek/qwen/doubao…), null 则按配置顺序自动故障转移
+     * @return 回复内容
+     */
+    ChatReplyVO chat(String raw, String provider);
+
+    /** 当前已配置可用的大模型供应商名称列表。 */
+    List<String> providers();
 
     /**
      * 景点深度讲解: 基于平台数据(含周边景点、经纬度等)做 RAG 增强,

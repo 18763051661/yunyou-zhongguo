@@ -40,7 +40,7 @@ public final class Requests {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record ChatRequest(String message, String sessionId) {
+    public record ChatRequest(String message, String sessionId, String provider) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

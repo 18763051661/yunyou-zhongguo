@@ -69,6 +69,8 @@
     tour: { route: null, index: 0, visited: new Set(), auto: false,
             travelMode: 'driving', plan: { travelDate: '', travelMinutes: 240, travelMode: 'driving' } },
     chat: [],
+    aiProvider: localStorage.getItem('aiProvider') || 'auto',
+    aiProviders: [],
     commentRating: 5,
     planner: { days: 3, loading: false, plan: null, err: null },
   };
@@ -96,6 +98,7 @@
 
   /* ---------------- 导航 ---------------- */
   function switchTab(tab) {
+    if (spaceCleanup) { spaceCleanup(); spaceCleanup = null; }
     state.tab = tab;
     $$('.nav-item').forEach(a => a.classList.toggle('active', a.dataset.tab === tab));
     stopSpeak();
@@ -252,6 +255,7 @@
         API.get('/api/categories'),
         API.get('/api/vr/hot?n=4').catch(() => []),   // SSM 落库的 VR 热度榜, 无记录时隐藏
       ]);
+      if (state.tab !== 'home') return; // 用户已切走, 不覆盖当前页面
       state.categories = categories;
       state.provinces = stats.provinceDistribution || [];
       const heroImg = hot[0] ? hot[0].imageUrl : '';
@@ -261,7 +265,7 @@
       <section class="hero">
         <img ${imgAttr(heroImg)} alt="云游中国" />
         <div class="hero-content">
-          <h1>云游中国 · 全国景点智能导览<br/>足不出户，沉浸式畅游大好河山</h1>
+          <h1>云游中国 · 星际探索<br/>全国景点智能导览 × 星际科普，畅游山河与星河</h1>
           <p>${stats.spotCount} 处真实景点覆盖 ${stats.provinceCount} 个省级行政区，${stats.routeCount} 条跨区域主题路线；通义千问/DeepSeek/豆包AI 多引擎 + 图文语音虚拟游览，带你走遍中国。</p>
           <div class="hero-search">
             <input id="heroKw" placeholder="搜索景点 / 省份 / 城市，如：故宫、四川、免费…" />
@@ -1122,10 +1126,18 @@
    * AI 助教
    * ============================================================ */
   function renderAi() {
+    // 拉取可用供应商(只拉一次)
+    if (!state.aiProviders.length) {
+      API.get('/api/ai/providers').then(list => { state.aiProviders = list || []; paintModelSwitch(); }).catch(() => {});
+    }
     $('#app').innerHTML = `
     <div class="ai-wrap">
       <div class="chat-box">
-        <div class="chat-head"><span class="live-dot"></span><b>云游中国 AI 助教</b><span class="engine-tag" id="engineTag">通义千问 / DeepSeek / 豆包AI 多引擎在线</span></div>
+        <div class="chat-head">
+          <span class="live-dot"></span>
+          <b>云游中国 · 星际 AI 助教 小云</b>
+          <div class="model-switch" id="modelSwitch"></div>
+        </div>
         <div class="chat-msgs" id="chatMsgs"></div>
         <div class="suggestions" id="chatSuggest"></div>
         <div class="chat-input">
@@ -1134,7 +1146,31 @@
         </div>
       </div>
       <div class="ai-side">
-        <h4>💡 你可以问我</h4>
+        <div class="xy-stage" id="xyStage">
+          <div class="xiaoyun" id="xiaoyun">
+            <div class="xy-bubble" id="xyBubble">点我打个招呼 👋</div>
+            <div class="xy-shadow"></div>
+            <div class="xy-body">
+              <div class="xy-hat"></div>
+              <div class="xy-head">
+                <div class="xy-eye left"></div>
+                <div class="xy-eye right"></div>
+                <div class="xy-cheek left"></div>
+                <div class="xy-cheek right"></div>
+                <div class="xy-mouth"></div>
+              </div>
+              <div class="xy-arm left"></div>
+              <div class="xy-arm right"></div>
+            </div>
+          </div>
+        </div>
+        <div class="fun-row">
+          <button class="fun-btn" data-fun="joke">😄 讲个笑话</button>
+          <button class="fun-btn" data-fun="poem">📜 背首诗</button>
+          <button class="fun-btn" data-fun="guess">🎯 猜景点</button>
+          <button class="fun-btn" data-fun="quiz" style="background:var(--accent);color:#fff;border-color:var(--accent)">🎮 极速挑战</button>
+        </div>
+        <h4 style="margin-top:14px">💡 你可以问我</h4>
         <ul>
           <li data-q="推荐一条丝绸之路路线">推荐一条丝绸之路路线</li>
           <li data-q="介绍一下故宫博物院">介绍一下故宫博物院</li>
@@ -1157,6 +1193,8 @@
       } });
     }
     paintChat();
+    paintModelSwitch();
+    xyBind();
     $('#chatSend').onclick = sendChat;
     $('#chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
     $('#chatMsgs').addEventListener('click', e => {
@@ -1166,7 +1204,234 @@
       if (type === 'spot') openSpot(id);
       if (type === 'route') startTour(id);
     });
+    document.querySelectorAll('.fun-btn').forEach(b => b.onclick = () => funPlay(b.dataset.fun));
+    // 来自星际探索的联动提问: 自动填入并发送
+    if (pendingChatPrompt) {
+      const q = pendingChatPrompt; pendingChatPrompt = null;
+      $('#chatInput').value = q;
+      sendChat();
+    }
   }
+
+  /* ---- 小云拟人形象控制 ---- */
+  let xyTimer = null;
+  function xySet(cls, ms) {
+    const el = $('#xiaoyun');
+    if (!el) return;
+    el.classList.remove('thinking', 'speaking', 'happy', 'wave');
+    if (cls) el.classList.add(cls);
+    if (xyTimer) { clearTimeout(xyTimer); xyTimer = null; }
+    if (ms > 0) xyTimer = setTimeout(() => { el.classList.remove(cls); xyTimer = null; }, ms);
+  }
+  function xySay(text, ms = 1600) {
+    const b = $('#xyBubble');
+    if (!b) return;
+    b.textContent = text;
+    b.classList.add('show');
+    clearTimeout(b._t);
+    b._t = setTimeout(() => b.classList.remove('show'), ms);
+  }
+  function xyBind() {
+    const el = $('#xiaoyun');
+    if (!el || el._bound) return;
+    el._bound = true;
+    const greetings = ['你好呀～', '点我干嘛呀？', '我是小云！', '有问题问我吧～', '想去哪里玩？'];
+    el.addEventListener('click', () => {
+      xySet('wave', 2400);
+      xySay(greetings[Math.floor(Math.random() * greetings.length)], 1500);
+    });
+  }
+
+  /* ---- 模型切换器 ---- */
+  function paintModelSwitch() {
+    const box = $('#modelSwitch');
+    if (!box) return;
+    const providers = state.aiProviders.length ? state.aiProviders : ['deepseek', 'qwen', 'doubao'];
+    const label = { deepseek: '⚡ DeepSeek', qwen: '⚡ 通义千问', doubao: '⚡ 豆包' };
+    const chips = [`<span class="lbl">引擎:</span>`,
+      `<button class="model-chip auto ${state.aiProvider === 'auto' ? 'on' : ''}" data-p="auto">🎲 自动切换</button>`];
+    providers.forEach(p => chips.push(
+      `<button class="model-chip ${state.aiProvider === p ? 'on' : ''}" data-p="${p}">${label[p] || p}</button>`));
+    box.innerHTML = chips.join('');
+    box.querySelectorAll('.model-chip').forEach(c => c.onclick = () => {
+      state.aiProvider = c.dataset.p;
+      localStorage.setItem('aiProvider', state.aiProvider);
+      paintModelSwitch();
+      xySay(state.aiProvider === 'auto' ? '已开启自动切换模式' : `切换到 ${label[state.aiProvider] || state.aiProvider}`, 1400);
+    });
+  }
+
+  /* ---- 趣味玩法 ---- */
+  function funPlay(kind) {
+    const map = {
+      joke: '讲一个和旅行有关的笑话',
+      poem: '背一首和中国名山大川有关的古诗，并解释它写的是哪里',
+      guess: '说一个景点的三个线索，让我猜是哪里（你出题）',
+    };
+    if (kind === 'quiz') { startQuiz(); return; }
+    if (map[kind]) { $('#chatInput').value = map[kind]; sendChat(); }
+  }
+
+  /* ============================================================
+   * 🎮 极速景点大挑战: 5题限时答题, 小云陪玩
+   * ============================================================ */
+  let quiz = { running: false, idx: 0, score: 0, combo: 0, best: Number(localStorage.getItem('quizBest') || 0), total: 5, timer: null, left: 0, pool: [], q: null, locked: false };
+
+  async function startQuiz() {
+    if (quiz.running) return;
+    xySet('wave', 1500);
+    xySay('极速挑战开始！', 1200);
+    // 拉一批景点作为题库
+    try {
+      const list = await API.get('/api/spots?size=40&sort=default&page=1');
+      quiz.pool = (list && list.list ? list.list : Array.isArray(list) ? list : []).filter(s => s.name && s.province);
+    } catch (e) { quiz.pool = []; }
+    if (quiz.pool.length < 8) {
+      toast('题库加载失败, 稍后再试');
+      return;
+    }
+    quiz.running = true; quiz.idx = 0; quiz.score = 0; quiz.combo = 0;
+    openQuizModal();
+    nextQuestion();
+  }
+
+  function openQuizModal() {
+    let m = $('#quizModal');
+    if (!m) {
+      m = document.createElement('div');
+      m.id = 'quizModal';
+      m.className = 'quiz-mask';
+      m.innerHTML = `<div class="quiz-card" id="quizCard">
+        <div class="quiz-head">
+          <span class="quiz-title">🎮 极速景点大挑战</span>
+          <span class="quiz-score">得分 <b id="quizScore">0</b></span>
+          <span class="quiz-best">最佳 <b id="quizBest">${quiz.best}</b></span>
+          <button class="quiz-close" id="quizClose">✕</button>
+        </div>
+        <div class="quiz-body" id="quizBody"></div>
+      </div>`;
+      document.body.appendChild(m);
+    }
+    $('#quizBest').textContent = quiz.best;
+    m.classList.add('show');
+    $('#quizClose').onclick = endQuiz;
+  }
+
+  function endQuiz() {
+    if (quiz.timer) { clearInterval(quiz.timer); quiz.timer = null; }
+    quiz.running = false;
+    const m = $('#quizModal');
+    if (m) m.classList.remove('show');
+  }
+
+  function nextQuestion() {
+    if (quiz.idx >= quiz.total) { showQuizResult(); return; }
+    quiz.idx++;
+    quiz.locked = false;
+    const q = buildQuestion(quiz.pool);
+    quiz.q = q;
+    const body = $('#quizBody');
+    body.innerHTML = `
+      <div class="quiz-progress">第 ${quiz.idx} / ${quiz.total} 题 ${quiz.combo > 1 ? `<span class="quiz-combo">🔥 ${quiz.combo} 连击</span>` : ''}</div>
+      <div class="quiz-timer" id="quizTimer">⏱ 10</div>
+      <div class="quiz-q">${esc(q.text)}</div>
+      <div class="quiz-options">
+        ${q.options.map((o, i) => `<button class="quiz-opt" data-i="${i}">${String.fromCharCode(65 + i)}. ${esc(o)}</button>`).join('')}
+      </div>`;
+    body.querySelectorAll('.quiz-opt').forEach(b => b.onclick = () => answerQuiz(Number(b.dataset.i)));
+    quiz.left = 10;
+    paintTimer();
+    quiz.timer = setInterval(() => {
+      quiz.left--;
+      paintTimer();
+      if (quiz.left <= 0) { clearInterval(quiz.timer); quiz.timer = null; answerQuiz(-1); }
+    }, 1000);
+  }
+
+  function paintTimer() {
+    const t = $('#quizTimer');
+    if (!t) return;
+    t.textContent = '⏱ ' + quiz.left;
+    t.style.color = quiz.left <= 3 ? '#ef4444' : '';
+  }
+
+  function answerQuiz(i) {
+    if (quiz.locked) return;
+    quiz.locked = true;
+    if (quiz.timer) { clearInterval(quiz.timer); quiz.timer = null; }
+    const q = quiz.q;
+    const opts = document.querySelectorAll('.quiz-opt');
+    opts.forEach((b, idx) => {
+      b.disabled = true;
+      if (idx === q.answer) b.classList.add('right');
+      if (idx === i && i !== q.answer) b.classList.add('wrong');
+    });
+    if (i === q.answer) {
+      quiz.combo++;
+      const mult = Math.min(quiz.combo, 5);
+      const gain = (10 + quiz.left) * mult;
+      quiz.score += gain;
+      $('#quizScore').textContent = quiz.score;
+      xySet('happy', 900);
+      xySay((quiz.combo >= 3 ? `${quiz.combo}连击！` : '答对啦！') + '+' + gain, 1100);
+    } else {
+      quiz.combo = 0;
+      if (i === -1) { xySet('thinking'); xySay('超时啦～', 1100); }
+      else { xySet('sad', 900); xySay('差一点～', 1100); }
+    }
+    $('#quizBody').insertAdjacentHTML('beforeend',
+      `<div class="quiz-answer">正确答案：<b>${String.fromCharCode(65 + q.answer)}. ${esc(q.options[q.answer])}</b>${q.hint ? ' — ' + esc(q.hint) : ''}</div>`);
+    setTimeout(nextQuestion, 1500);
+  }
+
+  function showQuizResult() {
+    const s = quiz.score, max = quiz.total * 20 * 5;
+    const isNewBest = s > quiz.best;
+    if (isNewBest) { quiz.best = s; localStorage.setItem('quizBest', s); }
+    let title, emoji;
+    if (s >= max * 0.85) { title = '云游大师'; emoji = '🏆'; }
+    else if (s >= max * 0.6) { title = '资深驴友'; emoji = '🎒'; }
+    else if (s >= max * 0.35) { title = '旅行达人'; emoji = '🧭'; }
+    else { title = '旅行小白'; emoji = '🐣'; }
+    $('#quizBody').innerHTML = `
+      <div class="quiz-result">
+        <div class="quiz-emoji">${emoji}</div>
+        <div class="quiz-title-big">${title}${isNewBest ? ' 🎉 新纪录！' : ''}</div>
+        <div class="quiz-final-score">${s} 分</div>
+        <div class="quiz-tip">历史最佳：${quiz.best} 分 · ${s >= max * 0.6 ? '小云为你点赞！继续探索更多景点吧～' : '多看看景点详情，下次一定更棒！'}</div>
+        <button class="btn btn-primary" id="quizAgain">🔄 再来一局</button>
+      </div>`;
+    xySet('happy', 1200);
+    xySay(title + '！', 1500);
+    $('#quizAgain').onclick = () => { quiz.idx = 0; quiz.score = 0; quiz.combo = 0; $('#quizScore').textContent = 0; $('#quizBest').textContent = quiz.best; nextQuestion(); };
+  }
+
+  // 从景点池随机组题
+  function buildQuestion(pool) {
+    const spot = pool[Math.floor(Math.random() * pool.length)];
+    const type = Math.floor(Math.random() * 3);
+    if (type === 0) {
+      // 位于哪个省
+      const provinces = [...new Set(pool.map(s => s.province).filter(Boolean))];
+      const wrongs = shuffle(provinces.filter(p => p !== spot.province)).slice(0, 3);
+      const options = shuffle([spot.province, ...wrongs]);
+      return { text: `「${spot.name}」位于我国哪个省级行政区？`, options, answer: options.indexOf(spot.province), hint: spot.city };
+    } else if (type === 1) {
+      // 属于哪类景观
+      const cats = [...new Set(pool.map(s => s.categoryName).filter(Boolean))];
+      const wrongs = shuffle(cats.filter(c => c !== spot.categoryName)).slice(0, 3);
+      const options = shuffle([spot.categoryName, ...wrongs]);
+      return { text: `「${spot.name}」属于哪一类景观？`, options, answer: options.indexOf(spot.categoryName), hint: spot.tags && spot.tags[0] ? `标签: ${spot.tags[0]}` : '' };
+    } else {
+      // 门票价格档位
+      const price = spot.price == null ? 0 : Number(spot.price);
+      const tier = price === 0 ? '免费开放' : price < 60 ? '经济实惠(60元以下)' : price < 150 ? '中等价位(60-150元)' : '较高价位(150元以上)';
+      const tiers = ['免费开放', '经济实惠(60元以下)', '中等价位(60-150元)', '较高价位(150元以上)'];
+      const options = shuffle([...tiers]);
+      return { text: `「${spot.name}」的门票价格大约属于哪个档位？`, options, answer: options.indexOf(tier), hint: `参考价 ${price} 元` };
+    }
+  }
+  function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
   function paintChat() {
     const box = $('#chatMsgs');
@@ -1205,15 +1470,22 @@
     const box = $('#chatMsgs');
     box.insertAdjacentHTML('beforeend', `<div class="msg bot" id="typing">AI 正在思考…</div>`);
     box.scrollTop = box.scrollHeight;
+    xySet('thinking');
+    xySay('让我想想…', 4000);
     try {
-      const reply = await API.post('/api/ai/chat', { message: text, sessionId: state.tourSession || undefined });
+      const provider = state.aiProvider === 'auto' ? null : state.aiProvider;
+      const reply = await API.post('/api/ai/chat', { message: text, sessionId: state.tourSession || undefined, provider });
       $('#typing')?.remove();
       state.chat.push({ role: 'bot', reply });
       paintChat();
+      xySet('speaking', 1500);
+      xySay('回答完毕！', 1200);
+      setTimeout(() => xySet('happy', 800), 1500);
     } catch (e) {
       $('#typing')?.remove();
       state.chat.push({ role: 'bot', reply: { answer: '抱歉，我这边出了点小问题：' + e.message, suggestions: ['推荐一条经典路线'], type: 'text' } });
       paintChat();
+      xySet(null);
     }
   }
 
@@ -2557,6 +2829,647 @@
   }
 
   /* ---------------- 渲染分发 ---------------- */
+  /* ============================================================
+   * 🌌 星际探索: 魔幻银河系 3D 行星轨道图 + 天文科普
+   * ============================================================ */
+  const PLANETS = [
+    { name: '水星 Mercury', color: '#b5b5b5', size: 8, orbit: 70, speed: 8, tilt: 0.03, tex: 'mercury.jpg', note: 220,
+      spot: { province: '甘肃', theme: '戈壁荒漠', icon: '🏜️' },
+      desc: '距太阳最近的行星，表面布满陨石坑，无大气层，昼夜温差超 600℃。', diameter: '4,879 km', dist: '5,790 万 km', day: '58.6 地球日', year: '88 地球日', moons: 0, temp: '-173~427℃', gravity: '3.7 m/s²' },
+    { name: '金星 Venus', color: '#e8c07d', size: 12, orbit: 105, speed: 12, tilt: 177.4, tex: 'venus.jpg', note: 233.08,
+      spot: { province: '云南', theme: '热带雨林', icon: '🌴' },
+      desc: '太阳系最热行星，浓密二氧化碳大气造成失控温室效应，表面温度达 462℃。', diameter: '12,104 km', dist: '1.082 亿 km', day: '243 地球日', year: '225 地球日', moons: 0, temp: '462℃', gravity: '8.87 m/s²' },
+    { name: '地球 Earth', color: '#4a90d9', size: 13, orbit: 145, speed: 16, tilt: 23.4, cloud: true, tex: 'earth.jpg', cloudTex: 'earth_clouds.jpg', note: 261.63,
+      spot: { province: '', theme: '全国热门', icon: '🌏' },
+      desc: '我们的家园，目前已知唯一存在生命的星球，71% 被海洋覆盖，拥有一颗天然卫星月球。', diameter: '12,742 km', dist: '1.496 亿 km', day: '24 小时', year: '365.25 天', moons: 1, temp: '-89~58℃', gravity: '9.81 m/s²' },
+    { name: '火星 Mars', color: '#d9603b', size: 10, orbit: 185, speed: 20, tilt: 25.2, tex: 'mars.jpg', note: 293.66,
+      spot: { province: '新疆', theme: '火星地貌', icon: '🔴' },
+      desc: '红色星球，拥有太阳系最高山奥林匹斯山(21km)和最大峡谷水手谷，人类移居首选。', diameter: '6,779 km', dist: '2.279 亿 km', day: '24.6 小时', year: '687 地球日', moons: 2, temp: '-140~20℃', gravity: '3.71 m/s²' },
+    { name: '木星 Jupiter', color: '#d4a574', size: 30, orbit: 250, speed: 30, tilt: 3.1, tex: 'jupiter.jpg', note: 196,
+      spot: { province: '西藏', theme: '巨型高原', icon: '🏔️' },
+      desc: '太阳系最大行星，气态巨行星，大红斑是持续数百年的巨型风暴，质量是其他行星总和的2.5倍。', diameter: '139,820 km', dist: '7.785 亿 km', day: '9.9 小时', year: '11.86 地球年', moons: 95, temp: '-108℃', gravity: '24.79 m/s²' },
+    { name: '土星 Saturn', color: '#e8d5a3', size: 26, orbit: 315, speed: 40, tilt: 26.7, ring: true, tex: 'saturn.jpg', note: 174.61,
+      spot: { province: '贵州', theme: '梯田瀑布', icon: '🌾' },
+      desc: '以壮观环系闻名，环由冰和岩石碎片组成，密度比水还小，拥有太阳系最多的卫星。', diameter: '116,460 km', dist: '14.34 亿 km', day: '10.7 小时', year: '29.46 地球年', moons: 146, temp: '-139℃', gravity: '10.44 m/s²' },
+    { name: '天王星 Uranus', color: '#7dd3c4', size: 18, orbit: 375, speed: 55, tilt: 97.8, tex: 'uranus.jpg', note: 329.63,
+      spot: { province: '青海', theme: '青蓝盐湖', icon: '💠' },
+      desc: '侧躺着自转的冰巨星，自转轴倾斜 98°，大气层含甲烷使其呈青蓝色。', diameter: '50,724 km', dist: '28.71 亿 km', day: '17.2 小时', year: '84 地球年', moons: 27, temp: '-197℃', gravity: '8.69 m/s²' },
+    { name: '海王星 Neptune', color: '#4166f5', size: 17, orbit: 430, speed: 70, tilt: 28.3, tex: 'neptune.jpg', note: 146.83,
+      spot: { province: '海南', theme: '深蓝海洋', icon: '🌊' },
+      desc: '最远行星，深蓝色冰巨星，风速可达 2,100 km/h 为太阳系之最，仅被旅行者2号探测过一次。', diameter: '49,244 km', dist: '44.95 亿 km', day: '16.1 小时', year: '164.8 地球年', moons: 14, temp: '-201℃', gravity: '11.15 m/s²' },
+  ];
+  // 供「AI 助教 / 景点」联动使用的待发送提问
+  let pendingChatPrompt = null;
+
+  let spaceCleanup = null;
+  function renderSpace() {
+    $('#app').innerHTML = `
+    <div class="space-wrap">
+      <div class="space-header">
+        <h2>🌌 星际探索 · 魔幻银河系</h2>
+        <p>Three.js 真实 3D · 拖拽旋转 · 滚轮缩放 · 点击行星查看科普</p>
+        <div class="sp-toolbar">
+          <button class="sp-reset" id="spReset">↻ 重置视角</button>
+          <button class="sp-music" id="spMusic">🎵 背景音乐</button>
+        </div>
+      </div>
+      <div class="space-scene" id="spaceScene">
+        <div class="sp-loading" id="spLoading"><div class="sp-loading-ring"></div><span id="spLoadTxt">正在加载真实银河全景 0%</span></div>
+      </div>
+      <div class="sp-planet-bar" id="spPlanetBar"></div>
+      <div class="sp-control-panel">
+        <div class="sp-ctrl"><label>⚡ 公转速度</label><input type="range" id="spSpeed" min="0" max="5" step="0.1" value="1"><span id="spSpeedVal">1.0x</span></div>
+        <div class="sp-ctrl"><label>☀️ 太阳亮度</label><input type="range" id="spBright" min="0.2" max="4" step="0.1" value="1"><span id="spBrightVal">1.0</span></div>
+        <div class="sp-ctrl"><label>🔭 行星大小</label><input type="range" id="spSize" min="0.5" max="3" step="0.1" value="1"><span id="spSizeVal">1.0x</span></div>
+      </div>
+      <div class="sp-info" id="spInfo">
+        <div class="sp-info-tip">👆 点击行星或下方按钮探索宇宙奥秘</div>
+      </div>
+      <div class="sp-hint">🖱 拖拽旋转 · 滚轮缩放 · 点击行星联动 AI 与景点</div>
+    </div>`;
+
+    // ---- 底部行星导航条 (与 3D 场景双向联动) ----
+    $('#spPlanetBar').innerHTML = PLANETS.map((p, i) =>
+      `<button class="sp-pchip" data-idx="${i}"><i style="background:${p.color}"></i>${p.name.split(' ')[0]}</button>`
+    ).join('');
+    const chips = $$('.sp-pchip');
+
+    const container = $('#spaceScene');
+    const W = container.clientWidth, H = 560;
+
+    // ---- 场景 / 相机 / 渲染器 ----
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 5000);
+    camera.position.set(0, 80, 180);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    container.appendChild(renderer.domElement);
+
+    // ---- 真实星空: 柔光星点 + 螺旋银河带 + 星云 ----
+    const dotCanvas = hex => {
+      const c = document.createElement('canvas'); c.width = c.height = 64;
+      const x = c.getContext('2d');
+      const g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+      g.addColorStop(0, 'rgba(255,255,255,1)');
+      g.addColorStop(0.22, hex);
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    };
+    const dotWhite = dotCanvas('rgba(255,255,255,0.85)');
+    const dotBlue = dotCanvas('rgba(170,205,255,0.9)');
+    const dotWarm = dotCanvas('rgba(255,215,170,0.9)');
+
+    const stars = new THREE.Group(); scene.add(stars);
+    const makeStarLayer = (count, rMin, rMax, size, tex, opacity) => {
+      const pos = [];
+      for (let i = 0; i < count; i++) {
+        const r = rMin + Math.random() * (rMax - rMin);
+        const th = Math.random() * Math.PI * 2;
+        const ph = Math.acos(2 * Math.random() - 1);
+        pos.push(r * Math.sin(ph) * Math.cos(th), r * Math.sin(ph) * Math.sin(th), r * Math.cos(ph));
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      return new THREE.Points(geo, new THREE.PointsMaterial({
+        size, map: tex, transparent: true, opacity, depthWrite: false,
+        blending: THREE.AdditiveBlending, sizeAttenuation: true
+      }));
+    };
+    // ---- 真实银河全景天空 (ESO 8K 全天球, 带加载进度) ----
+    const skyLoader = new THREE.TextureLoader();
+    const skyTex = skyLoader.load('static/lib/three/sky/milkyway.jpg', () => {
+      const el = $('#spLoading'); if (el) el.remove();
+    }, ev => {
+      const el = $('#spLoadTxt');
+      if (el && ev.total) el.textContent = `正在加载真实银河全景 ${Math.round(ev.loaded / ev.total * 100)}%`;
+    }, () => {
+      const el = $('#spLoading'); if (el) el.remove();
+      galaxy.visible = true;   // 全景失败时回退到程序化银河
+    });
+    skyTex.colorSpace = THREE.SRGBColorSpace;
+    skyTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const sky = new THREE.Mesh(new THREE.SphereGeometry(4300, 64, 48),
+      new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, depthWrite: false, toneMapped: false }));
+    sky.rotation.y = Math.PI * 0.6;
+    scene.add(sky);
+
+    stars.add(makeStarLayer(5000, 2200, 3600, 5, dotWhite, 0.16));
+    stars.add(makeStarLayer(1500, 2000, 3200, 9, dotBlue, 0.22));
+    stars.add(makeStarLayer(300, 1900, 3000, 15, dotWarm, 0.3));
+
+    // 螺旋银河盘：侧向观察形成横贯天穹的银河光带
+    const galaxy = new THREE.Group();
+    const gPos = [], gCol = [];
+    const cCore = new THREE.Color('#ffe6b8'), cArm1 = new THREE.Color('#bcd4ff'), cArm2 = new THREE.Color('#ffc9a3');
+    for (let i = 0; i < 18000; i++) {
+      const rr = Math.pow(Math.random(), 0.55) * 1900 + 120;
+      const arm = i % 3;
+      const theta = Math.random() * Math.PI * 2 + rr * 0.0016 + arm * (Math.PI * 2 / 3);
+      const spread = (1 - rr / 2200) * 140 + 30;
+      const x = Math.cos(theta) * rr + (Math.random() - 0.5) * spread;
+      const z = Math.sin(theta) * rr + (Math.random() - 0.5) * spread;
+      const y = (Math.random() - 0.5) * (60 + rr * 0.05);
+      gPos.push(x, y, z);
+      const c = rr < 520 ? cCore : (arm === 0 ? cArm1 : (arm === 1 ? cArm2 : cCore));
+      const k = 0.55 + Math.random() * 0.45;
+      gCol.push(c.r * k, c.g * k, c.b * k);
+    }
+    const gGeo = new THREE.BufferGeometry();
+    gGeo.setAttribute('position', new THREE.Float32BufferAttribute(gPos, 3));
+    gGeo.setAttribute('color', new THREE.Float32BufferAttribute(gCol, 3));
+    galaxy.add(new THREE.Points(gGeo, new THREE.PointsMaterial({
+      size: 8, map: dotWhite, transparent: true, opacity: 0.3, depthWrite: false,
+      blending: THREE.AdditiveBlending, vertexColors: true, sizeAttenuation: true
+    })));
+    galaxy.rotation.set(0.95, 0.4, 0.25);
+    stars.add(galaxy);
+    galaxy.visible = false;   // 已使用真实全景，隐藏程序化银河避免重影
+
+    // 星云柔光
+    const nebTex = (c1, c2) => {
+      const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+      const x = cv.getContext('2d');
+      const g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+      g.addColorStop(0, c1); g.addColorStop(0.45, c2); g.addColorStop(1, 'rgba(0,0,0,0)');
+      x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+      const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+    };
+    [[-1400, 500, -900, 'rgba(140,110,255,0.55)', 'rgba(80,50,180,0.16)', 1500],
+     [1250, -320, -1100, 'rgba(60,170,255,0.5)', 'rgba(30,90,200,0.14)', 1300],
+     [300, 950, -1600, 'rgba(255,140,200,0.35)', 'rgba(140,40,120,0.1)', 1100]].forEach(([x, y, z, a, b, s]) => {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: nebTex(a, b), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.5 }));
+      sp.position.set(x, y, z); sp.scale.set(s, s, 1); sp.visible = false; stars.add(sp);
+    });
+
+    // ---- 光照 ----
+    scene.add(new THREE.AmbientLight(0x2a3350, 0.35));
+    const sunLight = new THREE.PointLight(0xfff5e0, 3, 0, 0.5);
+    scene.add(sunLight);
+
+    // ---- 纹理加载器 (真实 NASA 贴图) ----
+    const loader = new THREE.TextureLoader();
+    const texPath = 'static/lib/three/planets/';
+    const loadTex = name => { const t = loader.load(texPath + name); t.colorSpace = THREE.SRGBColorSpace; return t; };
+    function makeTex(drawFn, w = 512, h = 256) {
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const ctx = c.getContext('2d'); drawFn(ctx, w, h);
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+    }
+    function noise(ctx, w, h, base, spots) {
+      ctx.fillStyle = base; ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < spots; i++) {
+        const x = Math.random() * w, y = Math.random() * h;
+        const r = Math.random() * 30 + 5;
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, 'rgba(255,255,255,0.15)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+      }
+    }
+
+    // ---- 太阳 (真实贴图) ----
+    const sun = new THREE.Mesh(new THREE.SphereGeometry(12, 48, 48),
+      new THREE.MeshBasicMaterial({ map: loadTex('sun.jpg') }));
+    scene.add(sun);
+    // 太阳光晕
+    const glowTex = makeTex((ctx, w, h) => {
+      const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+      g.addColorStop(0, 'rgba(255,230,150,0.85)');
+      g.addColorStop(0.18, 'rgba(255,200,80,0.45)');
+      g.addColorStop(0.45, 'rgba(255,140,40,0.16)');
+      g.addColorStop(0.75, 'rgba(255,100,0,0.05)');
+      g.addColorStop(1, 'rgba(255,100,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    }, 256, 256);
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+    glow.scale.set(58, 58, 1); scene.add(glow);
+    // 外层日冕 (更淡更大)
+    const corona = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0.35 }));
+    corona.scale.set(130, 130, 1); scene.add(corona);
+
+    // ---- FBM 分形噪声 (真实感纹理) ----
+    function fbm(x, y, octaves = 4) {
+      let v = 0, amp = 0.5, freq = 1;
+      for (let o = 0; o < octaves; o++) {
+        v += amp * Math.sin(x * freq) * Math.cos(y * freq * 1.3);
+        freq *= 2; amp *= 0.5;
+      }
+      return v;
+    }
+
+    // ---- 行星 ----
+    const planetObjs = [];
+    PLANETS.forEach((p, i) => {
+      const pivot = new THREE.Object3D(); scene.add(pivot);
+      // 轨道线
+      const orbitPts = [];
+      for (let a = 0; a <= 128; a++) { const t = a / 128 * Math.PI * 2; orbitPts.push(new THREE.Vector3(Math.cos(t) * p.orbit, 0, Math.sin(t) * p.orbit)); }
+      const orbitLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints(orbitPts),
+        new THREE.LineBasicMaterial({ color: 0x6c5ce7, transparent: true, opacity: 0.3 }));
+      scene.add(orbitLine);
+      // 倾角节点 (真实轴倾角)
+      const tiltNode = new THREE.Object3D(); tiltNode.rotation.z = (p.tilt || 0) * Math.PI / 180; pivot.add(tiltNode);
+      const spin = new THREE.Object3D(); tiltNode.add(spin);
+      // 行星纹理 (真实 NASA 贴图)
+      const baseSize = p.size * 0.4;
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(baseSize, 48, 48),
+        new THREE.MeshStandardMaterial({ map: loadTex(p.tex), roughness: 0.85, metalness: 0.05 }));
+      spin.add(mesh);
+      // 地球大气层 (蓝色辉光)
+      if (p.name.includes('地球')) {
+        const atmo = new THREE.Mesh(new THREE.SphereGeometry(baseSize * 1.15, 48, 48),
+          new THREE.MeshBasicMaterial({ color: 0x4a90d9, transparent: true, opacity: 0.15, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+        spin.add(atmo);
+      }
+      // 地球云层 (真实云图)
+      if (p.cloud) {
+        const clouds = new THREE.Mesh(new THREE.SphereGeometry(baseSize * 1.02, 48, 48),
+          new THREE.MeshStandardMaterial({ map: loadTex(p.cloudTex), transparent: true, opacity: 0.65, depthWrite: false }));
+        spin.add(clouds);
+        mesh.userData.clouds = clouds;
+      }
+      // 月球 (绕地球公转)
+      if (p.name.includes('地球')) {
+        const moonOrbit = new THREE.Object3D();
+        const moon = new THREE.Mesh(new THREE.SphereGeometry(baseSize * 0.27, 24, 24),
+          new THREE.MeshStandardMaterial({ map: loadTex('moon.jpg'), roughness: 1, metalness: 0 }));
+        moon.position.set(baseSize * 2.6, 0, 0);
+        moonOrbit.add(moon);
+        mesh.add(moonOrbit);
+        mesh.userData.moonOrbit = moonOrbit;
+      }
+      // 土星环 (含卡西尼缝)
+      if (p.ring) {
+        const ringTex = makeTex((ctx, w, h) => {
+          for (let x = 0; x < w; x++) {
+            const t = x / w;
+            let a = 0;
+            if (t > 0.05 && t < 0.95) {
+              a = 0.4 + Math.random() * 0.4;
+              // 卡西尼缝
+              if (t > 0.62 && t < 0.68) a *= 0.15;
+              if (t < 0.12) a *= 0.4;
+            }
+            ctx.fillStyle = `rgba(${210 + Math.random() * 45},${185 + Math.random() * 40},${140 + Math.random() * 40},${a})`;
+            ctx.fillRect(x, 0, 1, h);
+          }
+        }, 512, 64);
+        const ring = new THREE.Mesh(new THREE.RingGeometry(baseSize * 1.4, baseSize * 2.3, 96),
+          new THREE.MeshBasicMaterial({ map: ringTex, side: THREE.DoubleSide, transparent: true, opacity: 0.9 }));
+        ring.rotation.x = Math.PI / 2; spin.add(ring);
+        mesh.userData.ring = ring;
+      }
+      pivot.rotation.y = Math.random() * Math.PI * 2;
+      mesh.position.set(p.orbit, 0, 0);
+      planetObjs.push({ pivot, spin, mesh, baseSize, data: p });
+    });
+
+    // ---- 小行星带 (火星与木星之间) ----
+    const beltPos = [], beltCol = [];
+    for (let i = 0; i < 4000; i++) {
+      const r = 206 + Math.random() * 26;
+      const th = Math.random() * Math.PI * 2;
+      beltPos.push(Math.cos(th) * r, (Math.random() - 0.5) * 4, Math.sin(th) * r);
+      const g = 0.55 + Math.random() * 0.35;
+      beltCol.push(g, g * 0.9, g * 0.75);
+    }
+    const beltGeo = new THREE.BufferGeometry();
+    beltGeo.setAttribute('position', new THREE.Float32BufferAttribute(beltPos, 3));
+    beltGeo.setAttribute('color', new THREE.Float32BufferAttribute(beltCol, 3));
+    const belt = new THREE.Points(beltGeo, new THREE.PointsMaterial({
+      size: 2.2, map: dotWhite, transparent: true, opacity: 0.85, depthWrite: false,
+      blending: THREE.AdditiveBlending, vertexColors: true, sizeAttenuation: true
+    }));
+    scene.add(belt);
+
+    // ---- 选中高亮环 (Sprite 恒定朝向相机) ----
+    const selRingTex = makeTex((ctx, w, h) => {
+      ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(w / 2, h / 2, w / 2 - 6, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = 'rgba(167,139,250,0.35)'; ctx.lineWidth = 14;
+      ctx.beginPath(); ctx.arc(w / 2, h / 2, w / 2 - 12, 0, Math.PI * 2); ctx.stroke();
+    }, 128, 128);
+    const selRing = new THREE.Sprite(new THREE.SpriteMaterial({ map: selRingTex, transparent: true, depthWrite: false, depthTest: false }));
+    selRing.visible = false; scene.add(selRing);
+
+    // ---- 简易轨道控制器 (不依赖外部 OrbitControls) ----
+    let azimuth = 0, polar = Math.PI / 3, dist = 200, target = new THREE.Vector3(0, 0, 0);
+    let dragging = false, lastX = 0, lastY = 0, velA = 0, velP = 0;
+    const updateCam = () => {
+      camera.position.x = target.x + dist * Math.sin(polar) * Math.sin(azimuth);
+      camera.position.y = target.y + dist * Math.cos(polar);
+      camera.position.z = target.z + dist * Math.sin(polar) * Math.cos(azimuth);
+      camera.lookAt(target);
+    };
+    updateCam();
+    const onDown = e => { dragging = true; const p = e.touches ? e.touches[0] : e; lastX = p.clientX; lastY = p.clientY; velA = 0; velP = 0; container.style.cursor = 'grabbing'; };
+    const onMove = e => {
+      if (!dragging) return;
+      const p = e.touches ? e.touches[0] : e;
+      const dx = p.clientX - lastX, dy = p.clientY - lastY;
+      lastX = p.clientX; lastY = p.clientY;
+      azimuth -= dx * 0.005; polar -= dy * 0.005;
+      polar = Math.max(0.1, Math.min(Math.PI - 0.1, polar));
+      velA = -dx * 0.005; velP = -dy * 0.005;
+      updateCam();
+    };
+    const onUp = () => {
+      dragging = false; container.style.cursor = 'grab';
+      const inertia = () => {
+        if (Math.abs(velA) < 0.0005 && Math.abs(velP) < 0.0005) return;
+        azimuth += velA; polar += velP;
+        polar = Math.max(0.1, Math.min(Math.PI - 0.1, polar));
+        velA *= 0.93; velP *= 0.93; updateCam();
+        requestAnimationFrame(inertia);
+      };
+      requestAnimationFrame(inertia);
+    };
+    renderer.domElement.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    renderer.domElement.addEventListener('touchstart', onDown, { passive: true });
+    renderer.domElement.addEventListener('touchmove', e => { onMove(e); e.preventDefault(); }, { passive: false });
+    renderer.domElement.addEventListener('touchend', onUp);
+    renderer.domElement.addEventListener('wheel', e => {
+      e.preventDefault();
+      dist = Math.max(30, Math.min(600, dist + e.deltaY * 0.2));
+      updateCam();
+    }, { passive: false });
+    const controls = { update: () => {}, dispose: () => {} };
+
+    // ---- 点击 / 悬停选行星 ----
+    const raycaster = new THREE.Raycaster(); const mouse = new THREE.Vector2();
+    const pickAt = e => {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObjects(planetObjs.map(o => o.mesh));
+      return hits.length ? planetObjs.find(o => o.mesh === hits[0].object) : null;
+    };
+    let hovered = null;
+    renderer.domElement.addEventListener('mousemove', e => {
+      if (dragging) return;
+      const obj = pickAt(e);
+      if (obj !== hovered) {
+        if (hovered) hovered.mesh.scale.setScalar(sizeMul);
+        hovered = obj;
+        if (hovered) hovered.mesh.scale.setScalar(sizeMul * 1.15);
+        container.style.cursor = hovered ? 'pointer' : 'grab';
+      }
+    });
+    renderer.domElement.addEventListener('click', e => {
+      const obj = pickAt(e);
+      if (obj) focusPlanet(obj);
+    });
+
+    // ---- 飞行探测 + 三向联动 ----
+    let flying = false, flyTarget = null, flyFrom = new THREE.Vector3(), flyT = 0;
+    let selectedObj = null, spotReqId = 0;
+
+    function syncChips() {
+      chips.forEach(c => c.classList.toggle('on', selectedObj && c.dataset.idx === String(planetObjs.indexOf(selectedObj))));
+    }
+
+    function focusPlanet(obj) {
+      const p = obj.data;
+      selectedObj = obj;
+      syncChips();
+      // 选中高亮环
+      selRing.visible = true;
+      selRing.scale.setScalar(obj.baseSize * 4.2);
+      // 音乐随行星变调
+      retuneMusic(p.note);
+      // 信息卡
+      $('#spInfo').innerHTML = `
+        <div class="sp-info-card">
+          <div class="sp-info-name"><i class="sp-dot" style="background:${p.color}"></i>${p.name}</div>
+          <div class="sp-info-desc">${p.desc}</div>
+          <div class="sp-info-meta">
+            <div><span>直径</span><b>${p.diameter}</b></div>
+            <div><span>距太阳</span><b>${p.dist}</b></div>
+            <div><span>自转周期</span><b>${p.day}</b></div>
+            <div><span>公转周期</span><b>${p.year}</b></div>
+            <div><span>卫星数</span><b>${p.moons}</b></div>
+            <div><span>表面温度</span><b>${p.temp}</b></div>
+            <div><span>重力</span><b>${p.gravity}</b></div>
+          </div>
+          <div class="sp-actions">
+            <button class="sp-ai" id="spAi">🤖 让小云讲讲</button>
+            <button class="sp-back" id="spBack">🚀 返回</button>
+          </div>
+          <button class="sp-voice" id="spVoice">🔊 语音讲解</button>
+          <div class="sp-spots-box" id="spSpotsBox">
+            <div class="sp-spots-title">${p.spot.icon} 联动云游景点 · ${p.spot.theme}</div>
+            <div class="sp-spots-loading">正在从景点库匹配…</div>
+          </div>
+        </div>`;
+
+      // ① 联动 AI 助教：带着行星上下文跳到 AI 页并直接提问
+      $('#spAi').onclick = () => {
+        pendingChatPrompt = `我在「星际探索」里点到${p.name}，请用两三句话讲讲它的天文趣闻，再推荐一个地球上气质相近的云游中国目的地。`;
+        switchTab('ai');
+      };
+      $('#spBack').onclick = () => flyBack();
+      // 语音讲解
+      $('#spVoice').onclick = () => {
+        speak(`${p.name.split(' ')[0]}。${p.desc}直径${p.diameter}，距太阳${p.dist}，自转周期${p.day}，公转周期${p.year}，共有${p.moons}颗卫星。`);
+      };
+
+      // ② 联动云游景点：按行星气质拉取真实景点
+      const reqId = ++spotReqId;
+      const q = p.spot.province
+        ? `/api/spots?size=3&page=1&sort=default&province=${encodeURIComponent(p.spot.province)}`
+        : `/api/spots?size=3&page=1&sort=default`;
+      API.get(q).then(res => {
+        if (reqId !== spotReqId) return;
+        const list = (res && res.list) || [];
+        const box = $('#spSpotsBox');
+        if (!box) return;
+        if (!list.length) { box.innerHTML = `<div class="sp-spots-title">${p.spot.icon} 联动云游景点 · ${p.spot.theme}</div><div class="sp-spots-loading">暂无匹配景点</div>`; return; }
+        box.innerHTML = `<div class="sp-spots-title">${p.spot.icon} 联动云游景点 · ${p.spot.theme}（${p.spot.province || '全国'}）</div>` +
+          list.map(s => `<button class="sp-spot" data-spot="${s.id}">
+            <span class="sp-spot-name">${esc(s.name)}</span>
+            <span class="sp-spot-meta">📍${esc(s.province)} · ⭐${Number(s.rating || 0).toFixed(1)} · ${Number(s.price) > 0 ? '¥' + Number(s.price) : '免费'}</span>
+          </button>`).join('');
+        box.querySelectorAll('[data-spot]').forEach(b => b.onclick = () => openSpot(Number(b.dataset.spot)));
+      }).catch(() => {
+        if (reqId !== spotReqId) return;
+        const box = $('#spSpotsBox');
+        if (box) box.innerHTML = `<div class="sp-spots-title">${p.spot.icon} 联动云游景点 · ${p.spot.theme}</div><div class="sp-spots-loading">景点服务未连接</div>`;
+      });
+
+      // 启动飞行
+      flyTarget = obj; flyFrom.copy(camera.position); flyT = 0; flying = true;
+    }
+    function flyBack() {
+      stopSpeak();
+      flyTarget = null; selectedObj = null; spotReqId++; syncChips();
+      selRing.visible = false;
+      flyFrom.copy(camera.position); flyT = 0; flying = true;
+      retuneMusic(261.63);
+      $('#spInfo').innerHTML = `<div class="sp-info-tip">👆 点击行星或下方按钮探索宇宙奥秘</div>`;
+    }
+
+    // 导航条 ↔ 3D 场景联动
+    chips.forEach(c => c.onclick = () => {
+      const obj = planetObjs[Number(c.dataset.idx)];
+      if (obj) focusPlanet(obj);
+    });
+
+    $('#spReset').onclick = () => { flyBack(); azimuth = 0; polar = Math.PI / 3; dist = 200; velA = 0; velP = 0; updateCam(); };
+
+    // ---- 控制面板: 速度 / 亮度 / 大小 ----
+    let speedMul = 1, brightMul = 1, sizeMul = 1;
+    $('#spSpeed').oninput = e => { speedMul = parseFloat(e.target.value); $('#spSpeedVal').textContent = speedMul.toFixed(1) + 'x'; };
+    $('#spBright').oninput = e => { brightMul = parseFloat(e.target.value); $('#spBrightVal').textContent = brightMul.toFixed(1); sunLight.intensity = 3 * brightMul; glow.material.opacity = 0.6 * brightMul; };
+    $('#spSize').oninput = e => {
+      sizeMul = parseFloat(e.target.value); $('#spSizeVal').textContent = sizeMul.toFixed(1) + 'x';
+      planetObjs.forEach(o => {
+        o.mesh.scale.setScalar(sizeMul);
+        if (o.mesh.userData.clouds) o.mesh.userData.clouds.scale.setScalar(sizeMul);
+        if (o.mesh.userData.ring) o.mesh.userData.ring.scale.setScalar(sizeMul);
+      });
+    };
+
+    // ---- 太空氛围音乐 (Web Audio API 实时生成, 随行星变调) ----
+    let spaceCtx = null, spaceNodes = [], spaceTimer = null;
+    let musicRoot = 261.63;
+    const padOscs = [];      // { osc, ratio } 随行星根音变调
+    function startSpaceMusic() {
+      spaceCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const master = spaceCtx.createGain(); master.gain.value = 0.0; master.connect(spaceCtx.destination);
+      master.gain.linearRampToValueAtTime(0.25, spaceCtx.currentTime + 2);
+      // 低频 drone (深空, 跟随根音低八度)
+      [0.5, 0.75, 1].forEach((ratio, i) => {
+        const o = spaceCtx.createOscillator(); o.type = 'sine'; o.frequency.value = musicRoot * ratio;
+        const g = spaceCtx.createGain(); g.gain.value = 0.15 - i * 0.04;
+        const lp = spaceCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 200;
+        const lfo = spaceCtx.createOscillator(); lfo.frequency.value = 0.05 + i * 0.02;
+        const lfoGain = spaceCtx.createGain(); lfoGain.gain.value = 0.03;
+        lfo.connect(lfoGain); lfoGain.connect(g.gain);
+        o.connect(lp); lp.connect(g); g.connect(master);
+        o.start(); lfo.start();
+        spaceNodes.push(o, lfo);
+        padOscs.push({ osc: o, ratio });
+      });
+      // 漂浮 pad 和弦 (大三和弦, 随根音变调)
+      [1, 1.25, 1.5, 2].forEach((ratio, i) => {
+        const o = spaceCtx.createOscillator(); o.type = 'triangle'; o.frequency.value = musicRoot * ratio;
+        const g = spaceCtx.createGain(); g.gain.value = 0;
+        const lp = spaceCtx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 800;
+        const lfo = spaceCtx.createOscillator(); lfo.frequency.value = 0.08 + i * 0.03;
+        const lfoGain = spaceCtx.createGain(); lfoGain.gain.value = 0.06;
+        lfo.connect(lfoGain); lfoGain.connect(g.gain);
+        o.connect(lp); lp.connect(g); g.connect(master);
+        o.start(); lfo.start();
+        spaceNodes.push(o, lfo);
+        padOscs.push({ osc: o, ratio });
+      });
+      // 星光闪烁音
+      const twinkle = () => {
+        if (!spaceCtx) return;
+        const o = spaceCtx.createOscillator(); o.type = 'sine';
+        o.frequency.value = 1200 + Math.random() * 1800;
+        const g = spaceCtx.createGain(); g.gain.value = 0;
+        o.connect(g); g.connect(master);
+        const t = spaceCtx.currentTime;
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.03, t + 0.02); g.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+        o.start(t); o.stop(t + 0.8);
+        spaceTimer = setTimeout(twinkle, 1500 + Math.random() * 2500);
+      };
+      spaceTimer = setTimeout(twinkle, 1000);
+    }
+    function stopSpaceMusic() {
+      if (spaceCtx) { spaceCtx.close(); spaceCtx = null; }
+      clearTimeout(spaceTimer); spaceNodes = []; padOscs.length = 0;
+    }
+    // 行星 ↔ 音乐联动: 切到行星时整段和声平滑变调
+    function retuneMusic(root) {
+      musicRoot = root;
+      if (!spaceCtx) return;
+      const t = spaceCtx.currentTime;
+      padOscs.forEach(p => p.osc.frequency.cancelScheduledValues(t));
+      padOscs.forEach(p => p.osc.frequency.linearRampToValueAtTime(root * p.ratio, t + 0.9));
+    }
+    let bgmOn = false;
+    $('#spMusic').onclick = () => {
+      bgmOn = !bgmOn;
+      if (bgmOn) { startSpaceMusic(); $('#spMusic').textContent = '🔊 星海乐章'; $('#spMusic').classList.add('on'); }
+      else { stopSpaceMusic(); $('#spMusic').textContent = '🎵 背景音乐'; $('#spMusic').classList.remove('on'); }
+    };
+
+    // ---- 动画循环 ----
+    let raf;
+    const clock = new THREE.Clock();
+    const defaultCam = new THREE.Vector3(0, 80, 200);
+    const animate = () => {
+      raf = requestAnimationFrame(animate);
+      const t = clock.getElapsedTime();
+      sun.rotation.y = t * 0.1;
+      stars.rotation.y = t * 0.004;
+      sky.rotation.y = Math.PI * 0.6 + t * 0.0012;
+      glow.material.opacity = 0.85 + Math.sin(t * 1.3) * 0.1;
+      corona.material.opacity = 0.3 + Math.sin(t * 0.8 + 1) * 0.08;
+      planetObjs.forEach(o => {
+        o.pivot.rotation.y += (1 / o.data.speed) * 0.02 * speedMul;
+        o.spin.rotation.y += 0.01 * speedMul;
+        if (o.mesh.userData.clouds) o.mesh.userData.clouds.rotation.y += 0.013 * speedMul;
+        if (o.mesh.userData.moonOrbit) o.mesh.userData.moonOrbit.rotation.y += 0.025 * speedMul;
+      });
+      belt.rotation.y += 0.0025 * speedMul;
+      // 选中环跟随行星
+      if (selectedObj) {
+        const w = new THREE.Vector3(); selectedObj.mesh.getWorldPosition(w);
+        selRing.position.copy(w);
+        selRing.scale.setScalar(selectedObj.baseSize * sizeMul * 4.2);
+        selRing.material.opacity = 0.55 + Math.sin(t * 3) * 0.3;
+      }
+      // 飞行探测插值
+      if (flying) {
+        flyT += 0.02;
+        const e = 1 - Math.pow(1 - Math.min(flyT, 1), 3); // easeOutCubic
+        if (flyTarget) {
+          const tp = new THREE.Vector3(); flyTarget.mesh.getWorldPosition(tp);
+          const dest = tp.clone().add(new THREE.Vector3(0, flyTarget.baseSize * 2.5, flyTarget.baseSize * 5));
+          camera.position.lerpVectors(flyFrom, dest, e);
+          camera.lookAt(tp);
+          target.copy(tp);
+        } else {
+          camera.position.lerpVectors(flyFrom, defaultCam, e);
+          camera.lookAt(0, 0, 0);
+          target.set(0, 0, 0);
+          dist = 200; azimuth = 0; polar = Math.PI / 3;
+        }
+        if (flyT >= 1) flying = false;
+      } else {
+        updateCam();
+      }
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    // ---- 清理函数 ----
+    spaceCleanup = () => {
+      cancelAnimationFrame(raf);
+      stopSpaceMusic();
+      controls.dispose();
+      renderer.dispose();
+      scene.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); if (obj.material) { if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose()); else obj.material.dispose(); } });
+      if (renderer.domElement.parentNode) renderer.domElement.parentNode.removeChild(renderer.domElement);
+    };
+  }
+  function shadeColor(hex, percent) {
+    const n = parseInt(hex.slice(1), 16);
+    let r = (n >> 16) + percent, g = ((n >> 8) & 0xff) + percent, b = (n & 0xff) + percent;
+    r = Math.max(0, Math.min(255, r)); g = Math.max(0, Math.min(255, g)); b = Math.max(0, Math.min(255, b));
+    return `rgb(${r},${g},${b})`;
+  }
+
   function render() {
     stopSpeak();
     switch (state.tab) {
@@ -2567,6 +3480,7 @@
       case 'tour': renderTour(); break;
       case 'map': renderMap(); break;
       case 'ai': renderAi(); break;
+      case 'space': renderSpace(); break;
       case 'orders': renderOrders(); break;
       case 'me': renderMe(); break;
       default: renderHome();

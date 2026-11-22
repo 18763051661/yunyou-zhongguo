@@ -17,11 +17,21 @@ public class AiController {
 
     /**
      * AI 助教对话。
+     * request.provider 可指定首选大模型(deepseek/qwen/doubao), 不填则按配置顺序自动故障转移。
      */
     @PostMapping("/chat")
     public Result<?> chat(@RequestBody(required = false) Requests.ChatRequest request) {
         String message = request == null ? "" : request.message();
-        return Result.ok(aiAssistantService.chat(message));
+        String provider = request == null ? null : request.provider();
+        return Result.ok(aiAssistantService.chat(message, provider));
+    }
+
+    /**
+     * 当前可用的大模型供应商列表(供前端模型切换器展示)。
+     */
+    @GetMapping("/providers")
+    public Result<?> providers() {
+        return Result.ok(aiAssistantService.providers());
     }
 
     /**

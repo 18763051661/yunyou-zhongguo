@@ -90,7 +90,30 @@ public class LlmClient implements InitializingBean {
      * 多轮对话。messages 为 {role, content} 列表。全部供应商失败返回 null。
      */
     public Reply chat(List<Map<String, String>> messages) {
-        for (Provider p : providers) {
+        return chat(messages, null);
+    }
+
+    /**
+     * 多轮对话, 可指定首选供应商。
+     * @param preferred 首选供应商名称(deepseek/qwen/doubao…), null 或未知则按配置顺序依次尝试。
+     *                  首选供应商失败后仍会自动回退到其它可用供应商, 保证服务不中断。
+     */
+    public Reply chat(List<Map<String, String>> messages, String preferred) {
+        List<Provider> order = providers;
+        if (preferred != null && !preferred.isBlank()) {
+            Provider first = providers.stream()
+                    .filter(p -> p.name().equalsIgnoreCase(preferred.trim())).findFirst().orElse(null);
+            if (first != null) {
+                order = new ArrayList<>();
+                order.add(first);
+                for (Provider p : providers) {
+                    if (!p.name().equalsIgnoreCase(first.name())) {
+                        order.add(p);
+                    }
+                }
+            }
+        }
+        for (Provider p : order) {
             String answer = invoke(p, messages);
             if (answer != null && !answer.isBlank()) {
                 return new Reply(answer.trim(), p.name());
@@ -101,6 +124,11 @@ public class LlmClient implements InitializingBean {
 
     public boolean available() {
         return !providers.isEmpty();
+    }
+
+    /** 当前已配置(有 API Key)的供应商名称列表, 供前端模型切换器展示。 */
+    public List<String> providerNames() {
+        return providers.stream().map(Provider::name).toList();
     }
 
     private String invoke(Provider p, List<Map<String, String>> messages) {

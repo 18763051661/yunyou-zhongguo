@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +49,11 @@ public class AiAssistantServiceImpl implements AiAssistantService {
 
     @Override
     public ChatReplyVO chat(String raw) {
+        return chat(raw, null);
+    }
+
+    @Override
+    public ChatReplyVO chat(String raw, String provider) {
         String msg = raw == null ? "" : raw.trim();
         // 先计算结构化结果(用于快捷建议、景点/路线跳转与兜底)
         ChatReplyVO local = localChat(msg);
@@ -58,7 +62,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             return local;
         }
         try {
-            LlmClient.Reply llmReply = callLlm(msg);
+            LlmClient.Reply llmReply = callLlm(msg, provider);
             if (llmReply != null && !llmReply.content().isBlank()) {
                 return new ChatReplyVO(llmReply.content(), local.getSuggestions(), local.getType(),
                         local.getSpotId(), local.getRouteId(), llmReply.provider());
@@ -67,6 +71,11 @@ public class AiAssistantServiceImpl implements AiAssistantService {
             log.warn("大模型对话失败, 使用本地知识库: {}", e.getMessage());
         }
         return local;
+    }
+
+    @Override
+    public List<String> providers() {
+        return llmClient.providerNames();
     }
 
     /**
@@ -264,7 +273,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
     // 真实大模型 + RAG
     // ------------------------------------------------------------------
 
-    private LlmClient.Reply callLlm(String msg) {
+    private LlmClient.Reply callLlm(String msg, String provider) {
         SpotVO spot = detectSpot(msg);
         StringBuilder kb = new StringBuilder();
         kb.append("平台数据: 共收录 ").append(spots().size()).append(" 个全国景点, 覆盖 ")
@@ -304,7 +313,7 @@ public class AiAssistantServiceImpl implements AiAssistantService {
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(Map.of("role", "system", "content", system));
         messages.add(Map.of("role", "user", "content", msg));
-        return llmClient.chat(messages);
+        return llmClient.chat(messages, provider);
     }
 
     // ------------------------------------------------------------------
